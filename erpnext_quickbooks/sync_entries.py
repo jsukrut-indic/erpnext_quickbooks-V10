@@ -424,19 +424,13 @@ def get_deduction(dt= None, pay_entry_obj= None, ref_doc= None, ref_pay= None, q
 		deduction_amount = recevied_amount - total_allocated_amount
 	else:
 		total_allocated_amount = flt(flt(ref_pay.get("paid_amount")) * flt(ref_doc.get('conversion_rate')))
-		# total_allocated_amount = flt(ref_pay.get("paid_amount") * 1.3861)
-		print total_allocated_amount, "2222222222 allocated in else 4444444444", flt(ref_doc.get('conversion_rate'))
-		print   "base recevied----------", pay_entry_obj.base_received_amount
-
 		deduction_amount = total_allocated_amount - pay_entry_obj.base_received_amount
 
-	print round(deduction_amount, 2), " :",deduction_amount 
 	if round(deduction_amount, 2):
 		deduction = pay_entry_obj.append("deductions",{})
 		deduction.account = quickbooks_settings.profit_loss_account
 		deduction.cost_center = frappe.db.get_value("Company",{"name": quickbooks_settings.select_company },"cost_center")
-		deduction.amount = deduction_amount
-		# deduction.amount = flt(deduction_amount, deduction.precision('amount'))
+		deduction.amount = flt(deduction_amount, deduction.precision('amount'))
 
 def get_account_detail(quickbooks_account_id):
 	""" account for payment """
