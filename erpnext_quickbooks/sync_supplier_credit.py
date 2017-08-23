@@ -46,6 +46,8 @@ def create_credit(qb_supplier_credit, quickbooks_supplier_credits_list, default_
 	quickbooks_settings = frappe.get_doc("Quickbooks Settings", "Quickbooks Settings")
 	create_supplier_credit(qb_supplier_credit, quickbooks_settings, quickbooks_supplier_credits_list, default_currency=None)
 
+
+
 def create_supplier_credit(qb_supplier_credit, quickbooks_settings, quickbooks_supplier_credits_list, default_currency=None):
 	""" 
 	In ERPNext Purcahse return is created against PI.
@@ -76,6 +78,40 @@ def create_supplier_credit(qb_supplier_credit, quickbooks_settings, quickbooks_s
 		stock_entry.flags.ignore_mandatory = True
 		stock_entry.save(ignore_permissions=True)
 		stock_entry.submit()
+
+
+
+
+# def create_supplier_credit(qb_supplier_credit, quickbooks_settings, quickbooks_supplier_credits_list, default_currency=None):
+# 	""" 
+# 	In ERPNext Purcahse return is created against PI.
+# 	But 
+# 	In Quickbooks Supplier Credit/Purchase return is created against Supplier/Vendor not against any PI/Bill,
+# 	So, to maintain stock in ERPNext, it is necessary to create -ve Stock Entry as stock is again going 
+# 	to decrease as Supplier is returning the product..
+# 	Than, after that Journal Entry is created with voucher type as Debit Note against Supplier as advance Payment. 
+# 	"""
+# 	stock_entry = frappe.db.get_value("Stock Entry", {"quickbooks_credit_memo_id": str(qb_supplier_credit.get("Id"))+"-"+"DN"}, "name")
+# 	if not stock_entry:
+# 		stock_item = update_stock(qb_supplier_credit['Line'], quickbooks_settings)
+# 		if stock_item == True:
+# 			stock_entry = frappe.get_doc({
+# 				"doctype": "Stock Entry",
+# 				"naming_series" : "DN-SE-QB-",
+# 				"quickbooks_credit_memo_id" : str(qb_supplier_credit.get("Id"))+"-"+"DN",
+# 				"posting_date" : qb_supplier_credit.get('TxnDate'),
+# 				"purpose": "Material Receipt",
+# 				"to_warehouse" : quickbooks_settings.warehouse,
+# 				"quickbooks_customer_reference" : frappe.db.get_value("Supplier",{"quickbooks_supp_id":qb_supplier_credit['VendorRef'].get('value')},"name"),
+# 				"quickbooks_credit_memo_reference" : qb_supplier_credit.get("DocNumber")
+# 				})
+# 			items = get_item_stock(qb_supplier_credit['Line'], quickbooks_settings, stock_item)
+# 			stock_entry.update({"items":items})
+
+# 			stock_entry
+# 			stock_entry.flags.ignore_mandatory = True
+# 			stock_entry.save(ignore_permissions=True)
+# 			stock_entry.submit()
 
 def get_item_stock(order_items, quickbooks_settings, stock_item):
   	items = []
@@ -108,6 +144,8 @@ def update_stock(line, quickbooks_settings):
 			Account_Detail +=1
 	if Account_Detail > 0 and Item_Detail ==0:
 		is_stock_item = False
+
+	print is_stock_item, "----------------------kkkkkkkkkkkkkkkkkkkkkk"
 	return is_stock_item
 
 def get_item_code(qb_item):

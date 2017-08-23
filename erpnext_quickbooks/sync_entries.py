@@ -50,21 +50,26 @@ def get_payments_against_credit_entries(get_qb_payment):
 						request_data=get_qb_payment, exception=True)
 
 def adjust_entries(payment_against_credit_note):
-	for entries in payment_against_credit_note:
-		payments, credit_notes = {}, [] 
-		for line in entries['Line']:
-			payment_dict = get_credit_note_dict(entries, line)
-			if line.get('LinkedTxn')[0].get('TxnType') == "Invoice":
-				payments[payment_dict.get("qb_si_id")] = payment_dict
-				payments[payment_dict.get("qb_si_id")]["credit_notes"] = []
-			else:
-				credit_notes.append(payment_dict)
-		
-		for row in payments:
-			payments[row]["credit_notes"].extend(credit_notes)
-		
-		if payments:
-			adjust_je_against_cn(payments)
+	try:
+		for entries in payment_against_credit_note:
+			payments, credit_notes = {}, [] 
+			for line in entries['Line']:
+				payment_dict = get_credit_note_dict(entries, line)
+				if line.get('LinkedTxn')[0].get('TxnType') == "Invoice":
+					payments[payment_dict.get("qb_si_id")] = payment_dict
+					payments[payment_dict.get("qb_si_id")]["credit_notes"] = []
+				else:
+					credit_notes.append(payment_dict)
+			
+			for row in payments:
+				payments[row]["credit_notes"].extend(credit_notes)
+			
+			if payments:
+				adjust_je_against_cn(payments)
+	except Exception, e:
+ 			make_quickbooks_log(title=e.message, status="Error", method="adjust_entries", message=frappe.get_traceback(),
+						request_data=payment_against_credit_note, exception=True)
+
 
 def get_credit_note_dict(entries, line):
 	return {
@@ -81,39 +86,43 @@ def get_credit_note_dict(entries, line):
 	}
 
 def adjust_je_against_cn(payments):
-	""" Adjust Journal Entries against Credit Note """
-	for si, value in payments.iteritems():
-		if len(value['credit_notes']) == 1:
-			for cn in value['credit_notes']:
-				lst = []
-				quickbooks_journal_entry_id = cn.get('credit_note_id')
-				args = get_jv_voucher_detail_no(quickbooks_journal_entry_id)
-				si_name =frappe.db.get_value("Sales Invoice", {"quickbooks_invoce_id": value.get('qb_si_id'),
-				"outstanding_amount":['!=',0] }, "name")
-				if args.get('voucher_detail_no') and args.get('unadjusted_amount') and si_name:
-					invoice = frappe.get_doc("Sales Invoice", si_name)
-					lst.append(frappe._dict(reconcile_entry(args, "Sales Invoice", si_name,
-						invoice, paid_amt=value.get('paid_amount'))))
-				if lst:
-					from erpnext.accounts.utils import reconcile_against_document
-					reconcile_against_document(lst)
-					frappe.db.commit()
-		elif len(value['credit_notes']) > 1:
-			for cn in value['credit_notes']:
-				lst1 = []
-				quickbooks_journal_entry_id = cn.get('credit_note_id')
-				args = get_jv_voucher_detail_no(quickbooks_journal_entry_id)
-				si_name =frappe.db.get_value("Sales Invoice", {"quickbooks_invoce_id": value.get('qb_si_id'),
-				"outstanding_amount":['!=',0] }, "name")
-				if args.get('voucher_detail_no') and args.get('unadjusted_amount') and si_name:
-					invoice = frappe.get_doc("Sales Invoice", si_name)
-					lst1.append(frappe._dict(reconcile_entry(args, "Sales Invoice", si_name,
-						invoice, paid_amt=cn.get('paid_amount'))))
-				if lst1:
-					from erpnext.accounts.utils import reconcile_against_document
-					reconcile_against_document(lst1)
-					frappe.db.commit()
-
+	try:
+		""" Adjust Journal Entries against Credit Note """
+		for si, value in payments.iteritems():
+			if len(value['credit_notes']) == 1:
+				for cn in value['credit_notes']:
+					lst = []
+					quickbooks_journal_entry_id = cn.get('credit_note_id')
+					args = get_jv_voucher_detail_no(quickbooks_journal_entry_id)
+					si_name =frappe.db.get_value("Sales Invoice", {"quickbooks_invoce_id": value.get('qb_si_id'),
+					"outstanding_amount":['!=',0] }, "name")
+					if args.get('voucher_detail_no') and args.get('unadjusted_amount') and si_name:
+						invoice = frappe.get_doc("Sales Invoice", si_name)
+						lst.append(frappe._dict(reconcile_entry(args, "Sales Invoice", si_name,
+							invoice, paid_amt=value.get('paid_amount'))))
+					if lst:
+						from erpnext.accounts.utils import reconcile_against_document
+						reconcile_against_document(lst)
+						frappe.db.commit()
+			elif len(value['credit_notes']) > 1:
+				for cn in value['credit_notes']:
+					lst1 = []
+					quickbooks_journal_entry_id = cn.get('credit_note_id')
+					args = get_jv_voucher_detail_no(quickbooks_journal_entry_id)
+					si_name =frappe.db.get_value("Sales Invoice", {"quickbooks_invoce_id": value.get('qb_si_id'),
+					"outstanding_amount":['!=',0] }, "name")
+					if args.get('voucher_detail_no') and args.get('unadjusted_amount') and si_name:
+						invoice = frappe.get_doc("Sales Invoice", si_name)
+						lst1.append(frappe._dict(reconcile_entry(args, "Sales Invoice", si_name,
+							invoice, paid_amt=cn.get('paid_amount'))))
+					if lst1:
+						from erpnext.accounts.utils import reconcile_against_document
+						reconcile_against_document(lst1)
+						frappe.db.commit()
+	except Exception, e:
+ 			make_quickbooks_log(title=e.message, status="Error", method="adjust_je_against_cn", message=frappe.get_traceback(),
+						request_data=payments, exception=True)
+					
 
 def reconcile_entry(args, invoice_type , invoice_name, invoice, paid_amt=None):
 	if invoice_type == "Purchase Invoice":
@@ -415,13 +424,19 @@ def get_deduction(dt= None, pay_entry_obj= None, ref_doc= None, ref_pay= None, q
 		deduction_amount = recevied_amount - total_allocated_amount
 	else:
 		total_allocated_amount = flt(flt(ref_pay.get("paid_amount")) * flt(ref_doc.get('conversion_rate')))
+		# total_allocated_amount = flt(ref_pay.get("paid_amount") * 1.3861)
+		print total_allocated_amount, "2222222222 allocated in else 4444444444", flt(ref_doc.get('conversion_rate'))
+		print   "base recevied----------", pay_entry_obj.base_received_amount
+
 		deduction_amount = total_allocated_amount - pay_entry_obj.base_received_amount
 
+	print round(deduction_amount, 2), " :",deduction_amount 
 	if round(deduction_amount, 2):
 		deduction = pay_entry_obj.append("deductions",{})
 		deduction.account = quickbooks_settings.profit_loss_account
 		deduction.cost_center = frappe.db.get_value("Company",{"name": quickbooks_settings.select_company },"cost_center")
 		deduction.amount = deduction_amount
+		# deduction.amount = flt(deduction_amount, deduction.precision('amount'))
 
 def get_account_detail(quickbooks_account_id):
 	""" account for payment """

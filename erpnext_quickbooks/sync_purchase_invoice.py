@@ -256,9 +256,9 @@ def get_order_items(qb_orders, order_items, quickbooks_settings, stock_item):
 			item_tax_rate, quickbooks_tax_code_ref, quickbooks__tax_code_value = item_based_expense_line_detail_tax_code_ref(qb_orders, qb_item, quickbooks_settings)
 			item_code = get_item_code(qb_item)
 			items.append({
-				"item_code": item_code.get('item_code'),
-				"item_name": item_code.get('item_name') if item_code else item_code.get('item_code'),
-				"description":qb_item.get('Description') if qb_item.get('Description') else item_code.get('item_name'),
+				"item_code": item_code.get('item_code') if item_code else '',
+				"item_name": item_code.get('item_name') if item_code else qb_item.get('Description')[:35],
+				"description":qb_item.get('Description') if qb_item.get('Description') else '',
 				"rate": qb_item.get('ItemBasedExpenseLineDetail').get('UnitPrice'),
 				"qty": qb_item.get('ItemBasedExpenseLineDetail').get('Qty'),
 				"expense_account": quickbooks_settings.expense_account,
