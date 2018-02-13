@@ -8,8 +8,12 @@ import datetime
 
 def sync_entry(quickbooks_obj):
 	"""Fetch JournalEntry data from QuickBooks"""
-	Entry = """SELECT * from JournalEntry""" 
-	qb_Entry = quickbooks_obj.query(Entry)
+	# print "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+	# print "________c___quickbooks_obj for sync_si_payment_______________________________________________________________" 
+	Entry = """SELECT count(*) from JournalEntry""" 
+	qb_Entry = quickbooks_obj.query(TxnId)
+	print "qb_Entry",qb_Entry
+	print "qb_Entry",type(qb_Entry),len(qb_Entry['QueryResponse'])
 	if qb_Entry['QueryResponse']:
 		get_qb_Entry =  qb_Entry['QueryResponse']['JournalEntry']
 		# print get_qb_Entry , "-----------------"
@@ -18,11 +22,12 @@ def sync_entry(quickbooks_obj):
 def sync_journal_entries(get_qb_Entry):
 	quickbooks_settings = frappe.get_doc("Quickbooks Settings", "Quickbooks Settings")
 	for qb_journal_entry in get_qb_Entry:
-		create_journal_entry(qb_journal_entry, quickbooks_settings)
+		if qb_journal_entry.get('Id') == "5886":
+			print "qb_journal_entry",qb_journal_entry
+			create_journal_entry(qb_journal_entry, quickbooks_settings)
 
 def create_journal_entry(qb_journal_entry, quickbooks_settings, quickbooks_journal_entry_list=[]):
 	""" store JournalEntry data in ERPNEXT """ 
-
 	journal = None
 	qb_journal_entry_id = ''
 	if qb_journal_entry.get('Id'):
@@ -36,10 +41,10 @@ def create_journal_entry(qb_journal_entry, quickbooks_settings, quickbooks_journ
 			journal.posting_date = qb_journal_entry.get('TxnDate')
 			journal.multi_currency = 1
 			get_journal_entry_accounts(journal, qb_journal_entry, quickbooks_settings)
+			journal.flags.validate = False
 			journal.flags.ignore_mandatory = True
 			journal.save()
 			journal.submit()
-
 			frappe.db.commit()
 			quickbooks_journal_entry_list.append(journal.quickbooks_journal_entry_id)
 
@@ -53,6 +58,7 @@ def create_journal_entry(qb_journal_entry, quickbooks_settings, quickbooks_journ
 	return quickbooks_journal_entry_list
 
 def get_journal_entry_accounts(journal, qb_journal_entry, quickbooks_settings):
+	# print  "journal, qb_journal_entry, quickbooks_settings",journal, qb_journal_entry, quickbooks_settings
 	def append_row(row, debit_in_account_currency, credit_in_account_currency):
 		if debit_in_account_currency:
 			debit_credit_entry(debit_in_account_currency)
@@ -67,8 +73,8 @@ def get_journal_entry_accounts(journal, qb_journal_entry, quickbooks_settings):
 		account.exchange_rate = entries.get('exchange_rate')
 		account.debit_in_account_currency = entries.get('final_amt') if entries.get('posting_type') == 'Debit' else None
 		account.credit_in_account_currency = entries.get('final_amt') if entries.get('posting_type') == 'Credit' else None
-
 	journal.set("accounts", [])
+
 	for row in qb_journal_entry['Line']:
 		if row.get('JournalEntryLineDetail').get('PostingType') == 'Debit':
 			debit_in_account_currency = get_debit_in_account_currency(row, qb_journal_entry)
@@ -77,7 +83,6 @@ def get_journal_entry_accounts(journal, qb_journal_entry, quickbooks_settings):
 		if row.get('JournalEntryLineDetail').get('PostingType') == 'Credit':
 			debit_in_account_currency = {}
 			credit_in_account_currency = get_credit_in_account_currency(row, qb_journal_entry)
-
 		append_row(row, debit_in_account_currency, credit_in_account_currency)
 		
 		TaxAmount =row['JournalEntryLineDetail'].get('TaxAmount')
@@ -93,12 +98,23 @@ def get_journal_entry_accounts(journal, qb_journal_entry, quickbooks_settings):
 
 def get_party_type(row):
 	quickbooks_party_type = row.get('JournalEntryLineDetail').get('Entity').get('Type') if row.get('JournalEntryLineDetail').get('Entity') else ''
+	
 	if quickbooks_party_type == "Customer":
 		return "Customer"
 	elif quickbooks_party_type == "Vendor":
 		return "Supplier"
+	elif quickbooks_party_type == "Employee":
+		return "Employee"
 	else:
 		return quickbooks_party_type
+
+
+	# if quickbooks_party_type == "Customer":
+	# 	return "Customer"
+	# elif quickbooks_party_type == "Vendor":
+	# 	return "Supplier"
+	# else:
+	# 	return quickbooks_party_type
 
 def get_party(row):
 	quickbooks_party_type = row.get('JournalEntryLineDetail').get('Entity').get('Type') if row.get('JournalEntryLineDetail').get('Entity') else ''
@@ -127,7 +143,10 @@ def get_account_currency(qb_journal_entry, row, total_amt, posting_type):
 	quickbooks_account_reference = row.get('JournalEntryLineDetail').get('AccountRef').get('value')
 	account_detail_info = get_jv_account_detail(quickbooks_account_reference)
 	account_details['account'] = account_detail_info.get('name')
-	party, party_type = get_party(row), get_party_type(row)
+	party = "QB Supplier"
+	party_type ="Supplier"
+	# party, party_type = get_party("Sukrut"), get_party_type("Customer")
+
 	
 	if party and party_type:
 		account_details['party'] = party 
@@ -135,7 +154,8 @@ def get_account_currency(qb_journal_entry, row, total_amt, posting_type):
 
 	if account_detail_info.get('account_currency') == company_currency:
 		account_details['exchange_rate'] = 1
-		account_details['final_amt'] = total_amt * qb_journal_entry.get('ExchangeRate')
+		account_details['final_amt'] = total_amt * 1
+		# account_details['final_amt'] = total_amt * qb_journal_entry.get('ExchangeRate')
 		return account_details
 	else:
 		account_details['exchange_rate'] = qb_journal_entry.get('ExchangeRate')
@@ -190,3 +210,4 @@ def get_tax_head_mapped_to_particular_account(tax_head, quickbooks_settings):
 		account_head_erpnext = quickbooks_settings.undefined_tax_account
 	account_head_erpnext = frappe.db.get_value("Account", {"name": account_head_erpnext}, ["name", "account_currency"], as_dict=1)
 	return account_head_erpnext
+

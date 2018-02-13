@@ -123,3 +123,10 @@ def detail_comparison_erp_qb_accounts(company_name):
 		else:
 			d[row[1]]["ERP"].append(row[0])
 	return d
+
+
+@frappe.whitelist()
+def submit_pi():
+	pi_doc = frappe.get_doc("Purchase Invoice","PINV-03121")
+	print "Purchase Invoice ",pi_doc.__dict__
+	pi.doc.submit()

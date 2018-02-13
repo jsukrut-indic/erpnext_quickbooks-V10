@@ -44,8 +44,9 @@ def pagination(quickbooks_obj, business_objects):
 	quickbooks_result_set = []
 	if business_objects in ["Customer", "Vendor", "Item", "Employee"]:
 		condition = " Where Active IN (true, false)"
-		
+	q ="""SELECT count(*) from {0} {1} """.format(business_objects, condition)
 	record_count = quickbooks_obj.query("""SELECT count(*) from {0} {1} """.format(business_objects, condition))
+	print "Record Count",record_count
 	total_record = record_count['QueryResponse']['totalCount']
 	limit_count = 90
 	total_page = total_record / limit_count if total_record % limit_count == 0 else total_record / limit_count + 1
@@ -57,6 +58,7 @@ def pagination(quickbooks_obj, business_objects):
 		else:
 			group_by = " ORDER BY Id ASC STARTPOSITION {1} MAXRESULTS {2}".format(business_objects, startposition, maxresults)
 		query_result = """SELECT * FROM {0} {1}""".format(business_objects, group_by)
+		TxnId = "select * from Payment where TxnId = '16483'"
 		qb_data = quickbooks_obj.query(query_result)
 		qb_result =  qb_data['QueryResponse']
 		if qb_result:

@@ -9,12 +9,16 @@ def sync_taxagency(quickbooks_obj):
 	"""Fetch TaxAgency data from QuickBooks"""
 	quickbooks_taxagency_list = []
 	business_objects = "TaxAgency"
+	print "business_objects",business_objects
 	get_qb_taxagency = pagination(quickbooks_obj, business_objects)
+	print "get_qb_taxagency",get_qb_taxagency
 	if get_qb_taxagency:
 		sync_qb_taxagency(get_qb_taxagency, quickbooks_taxagency_list)
 
 def sync_qb_taxagency(get_qb_taxagency, quickbooks_taxagency_list):
+	print "get_qb_taxagency",get_qb_taxagency
 	for qb_taxagency in get_qb_taxagency:
+		print "qb_taxagency",qb_taxagency
 		if not frappe.db.get_value("QuickBooks TaxAgency", {"quickbooks_tax_agency_id": qb_taxagency.get('Id')}, "name"):
 			create_taxagency(qb_taxagency, quickbooks_taxagency_list)
 

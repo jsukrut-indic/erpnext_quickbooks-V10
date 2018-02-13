@@ -6,9 +6,8 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 from .exceptions import QuickbooksError
-from .utils import disable_quickbooks_sync_on_exception, make_quickbooks_log
+from .utils import disable_quickbooks_sync_on_exception, make_quickbooks_log, cancel_record, cancel_amended_records
 from pyqb.quickbooks import QuickBooks
-
 from .sync_customers import *
 from .sync_suppliers import *
 from .sync_products import *
@@ -25,9 +24,6 @@ from .sync_term import *
 from .sync_expenses import *
 from .sync_credit_note import *
 from .sync_supplier_credit import *
-from .sync_payments import *
-from .sync_bill_payment import *
-
 
 
 QUICKBOOKS_CLIENT_KEY = ""
@@ -62,6 +58,7 @@ def sync_quickbooks_resources():
 				sync_from_quickbooks_to_erp(quickbooks_settings)
 				if quickbooks_settings.erpnext_to_quickbooks:
 					sync_from_erp_to_quickbooks(quickbooks_settings)
+				frappe.db.set_value("Quickbooks Settings", None, "last_sync_datetime", frappe.utils.now())
 				make_quickbooks_log(title="Sync Completed", status="Success", method=frappe.local.form_dict.cmd, 
 				message= "Updated {customers} customer(s)")
 
@@ -114,28 +111,34 @@ def sync_from_quickbooks_to_erp(quickbooks_settings):
 	    company_id=quickbooks_settings.realm_id,
 	    minorversion=3
 	)
-	frappe.db.set_value("Quickbooks Settings", None, "last_sync_datetime", frappe.utils.now())
-	sync_taxagency(quickbooks_obj)
-	sync_tax_rate(quickbooks_obj)
-	sync_tax_code(quickbooks_obj)
-	sync_Account(quickbooks_obj)
-	sync_customers(quickbooks_obj)
-	sync_suppliers(quickbooks_obj)
-	sync_terms(quickbooks_obj)
-	create_Employee(quickbooks_obj)
-	sync_items(quickbooks_obj)
+	print  "\n\n\n\n________________________\n\n\n\n"
+	print "quickbooks_obj",quickbooks_obj
+	# frappe.db.set_value("Quickbooks Settings", None, "last_sync_datetime", frappe.utils.now())
+	# sync_taxagency(quickbooks_obj)
+	# sync_tax_rate(quickbooks_obj)
+	# sync_tax_code(quickbooks_obj)
+	# sync_Account(quickbooks_obj)
+	# sync_customers(quickbooks_obj)
+	# sync_suppliers(quickbooks_obj)
+	# sync_terms(quickbooks_obj)
+	# create_Employee(quickbooks_obj)
+	# sync_items(quickbooks_obj)
+	# print "__Syncing PI"
+	# sync_pi_orders(quickbooks_obj)
+	# print "__Syncing PI Process DONE"
+	# sync_si_orders(quickbooks_obj)
 	
-	sync_pi_orders(quickbooks_obj)
-	sync_si_orders(quickbooks_obj)
-	
-	sync_credit_notes(quickbooks_obj)
-	sync_supplier_credits(quickbooks_obj)
+	# sync_credit_notes(quickbooks_obj)
+	# sync_supplier_credits(quickbooks_obj)
 
-	sync_pi_payment(quickbooks_obj)
-	sync_si_payment(quickbooks_obj)
+	# sync_pi_payment(quickbooks_obj)
+	# sync_si_payment(quickbooks_obj)
 
-	sync_expenses(quickbooks_obj)
-	sync_entry(quickbooks_obj)
+	# sync_expenses(quickbooks_obj)
+	# sync_entry(quickbooks_obj)
+
+	# cancel_record(quickbooks_obj)
+	# cancel_amended_records(quickbooks_obj, quickbooks_settings)
 
 def validate_quickbooks_settings(quickbooks_settings):
 	"""
@@ -171,7 +174,7 @@ def sync_from_erp_to_quickbooks(quickbooks_settings):
 def sync_account_masters():
 	quickbooks_settings = frappe.get_doc("Quickbooks Settings")
 	quickbooks_objects = QuickBooks(
-	    sandbox=False,
+	    sandbox=True,
 	    consumer_key=quickbooks_settings.consumer_key,
 	    consumer_secret=quickbooks_settings.consumer_secret,
 	    access_token=quickbooks_settings.access_token,
@@ -179,45 +182,11 @@ def sync_account_masters():
 	    company_id=quickbooks_settings.realm_id,
 	    minorversion=3
 	)
-	# creates_qb_accounts_heads_to_erp_chart_of_accounts()
-	# sync_taxagency(quickbooks_objects)
- 	sync_si_orders(quickbooks_objects)
- 	sync_payments(quickbooks_objects)
- 	# sync_bill_payments(quickbooks_objects)
-	# sync_tax_rate(quickbooks_objects)
-	# sync_tax_code(quickbooks_objects)
-	# sync_Account(quickbooks_objects)
-	#create_Employee(quickbooks_objects)
-	# sync_items(quickbooks_objects)
-	# sync_pi_orders(quickbooks_objects)
-	# sync_entry(quickbooks_objects)
-	# sync_expenses(quickbooks_objects)
-	# sync_entry(quickbooks_objects)
-
+	creates_qb_accounts_heads_to_erp_chart_of_accounts()
+	sync_taxagency(quickbooks_objects)
+	sync_tax_rate(quickbooks_objects)
+	sync_tax_code(quickbooks_objects)
+	sync_Account(quickbooks_objects)
 	frappe.db.set_value("Quickbooks Settings", None, "sync_master", 1)
 	frappe.db.commit()
 	return True
-
-@frappe.whitelist()
-def submit_pi():
-	pi_doc = frappe.get_doc("Purchase Invoice","PINV-03508")
-	print "Purchase Invoice ",pi_doc.__dict__
-	pi_doc.flags.ignore_validate = True
-	pi_doc.submit()
-
-@frappe.whitelist()
-def submit_si():
-	si_doc = frappe.get_doc("Sales Invoice","SINV-04139")
-	print "Sales Invoice ",si_doc.__dict__
-	print "\n\n\n__________________________-------"
-	si_doc.flags.ignore_validate = True
-	si_doc.submit()
-
-@frappe.whitelist()
-def create_jv():
-	data = {u'SyncToken': u'0', u'domain': u'QBO', u'DepositToAccountRef': {u'value': u'6'}, u'UnappliedAmt': 0, u'TxnDate': u'2018-02-01', u'TotalAmt': 360637.14, u'CurrencyRef': {u'name': u'United States Dollar', u'value': u'USD'}, u'ProcessPayment': False, u'sparse': False, u'Line': [{u'Amount': 360637.14, u'LineEx': {u'any': [{u'name': u'{http://schema.intuit.com/finance/v3}NameValue', u'nil': False, u'value': {u'Name': u'txnId', u'Value': u'16792'}, u'declaredType': u'com.intuit.schema.finance.v3.NameValue', u'scope': u'javax.xml.bind.JAXBElement$GlobalScope', u'globalScope': True, u'typeSubstituted': False}, {u'name': u'{http://schema.intuit.com/finance/v3}NameValue', u'nil': False, u'value': {u'Name': u'txnOpenBalance', u'Value': u'360637.14'}, u'declaredType': u'com.intuit.schema.finance.v3.NameValue', u'scope': u'javax.xml.bind.JAXBElement$GlobalScope', u'globalScope': True, u'typeSubstituted': False}, {u'name': u'{http://schema.intuit.com/finance/v3}NameValue', u'nil': False, u'value': {u'Name': u'txnReferenceNumber', u'Value': u'1129'}, u'declaredType': u'com.intuit.schema.finance.v3.NameValue', u'scope': u'javax.xml.bind.JAXBElement$GlobalScope', u'globalScope': True, u'typeSubstituted': False}]}, u'LinkedTxn': [{u'TxnId': u'16792', u'TxnType': u'Invoice'}]}], u'CustomerRef': {u'name': u'Amazon Marketplace', u'value': u'392'}, u'Id': u'16823', u'MetaData': {u'CreateTime': u'2018-02-09T16:16:48-08:00', u'LastUpdatedTime': u'2018-02-09T16:16:48-08:00'}}
-	print "data",data
-	print "\n\n\n__________________________"
-
-	si_doc.flags.ignore_validate = True
-	si_doc.submit()

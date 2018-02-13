@@ -42,7 +42,7 @@ def create_order(qb_orders, quickbooks_invoice_list, default_currency):
 	""" Store Sales Invoice in ERPNEXT """
 	quickbooks_settings = frappe.get_doc("Quickbooks Settings", "Quickbooks Settings")
 	create_sales_invoice(qb_orders, quickbooks_settings, quickbooks_invoice_list, default_currency)
-
+### Need TTo Fix For Us Account
 def create_sales_invoice(qb_orders, quickbooks_settings, quickbooks_invoice_list, default_currency):
 	si = frappe.db.get_value("Sales Invoice", {"quickbooks_invoce_id": qb_orders.get("Id")}, "name")
 	term_id = qb_orders.get('SalesTermRef').get('value') if qb_orders.get('SalesTermRef') else ""
@@ -50,6 +50,9 @@ def create_sales_invoice(qb_orders, quickbooks_settings, quickbooks_invoice_list
 	if term_id:
 		term = frappe.db.get_value("Terms and Conditions", {"quickbooks_term_id": term_id}, ["name","terms"],as_dict=1)
 	if not si:
+		total = net_total = grand_total = 0.0
+		qb_items_list = qb_orders.get('Line')
+		total = net_total = grand_total = qb_items_list[len(qb_items_list) -1].get('Amount') if len(qb_items_list) > 1 else 0.0 
 		si = frappe.get_doc({
 			"doctype": "Sales Invoice",
 			"quickbooks_invoce_id" : qb_orders.get("Id"),
@@ -64,15 +67,19 @@ def create_sales_invoice(qb_orders, quickbooks_settings, quickbooks_invoice_list
 			"territory" : frappe.db.get_value("Customer",{"quickbooks_cust_id":qb_orders['CustomerRef'].get('value')},"territory"),
 			"selling_price_list": quickbooks_settings.selling_price_list,
 			"ignore_pricing_rule": 1,
-			"update_stock": 1,
+			# "update_stock": 1,
 			"apply_discount_on": "Net Total",
 			"items": get_order_items(qb_orders['Line'], quickbooks_settings),
-			"taxes": get_individual_item_tax(qb_orders, qb_orders['Line'], quickbooks_settings),
+			# "taxes": get_individual_item_tax(qb_orders, qb_orders['Line'], quickbooks_settings),
 			"tc_name": term.get('name') if term else "",
+			"total":flt(total),
+			"net_total":flt(net_total),
+			"grand_total":flt(grand_total),
+			"conversion_rate":flt(1.000000000),
+			"price_list_currency":"USD",
 			"terms": term.get('terms')if term else ""
 
 		})
-		
 		if qb_orders.get('BillAddr'):
 			if not qb_orders.get('BillAddr').has_key("Long"):
 				if not (qb_orders.get('BillAddr').has_key("Country") or qb_orders.get('BillAddr').has_key("City")):
@@ -87,10 +94,64 @@ def create_sales_invoice(qb_orders, quickbooks_settings, quickbooks_invoice_list
 		set_debit_to(si, qb_orders, quickbooks_settings, default_currency)
 
 		si.flags.ignore_mandatory = True
+		si.flags.ignore_validate = True
+		set_debit_to(si, qb_orders, quickbooks_settings, default_currency)
 		si.save(ignore_permissions=True)
+		frappe.db.commit()
+		si.flags.ignore_mandatory = True
+		si.flags.ignore_validate = True
 		si.submit()
 		quickbooks_invoice_list.append(qb_orders.get("id"))
-		frappe.db.commit()	
+		frappe.db.commit()
+
+
+	# si = frappe.db.get_value("Sales Invoice", {"quickbooks_invoce_id": qb_orders.get("Id")}, "name")
+	# term_id = qb_orders.get('SalesTermRef').get('value') if qb_orders.get('SalesTermRef') else ""
+	# term = ""
+	# if term_id:
+	# 	term = frappe.db.get_value("Terms and Conditions", {"quickbooks_term_id": term_id}, ["name","terms"],as_dict=1)
+	# if not si:
+	# 	si = frappe.get_doc({
+	# 		"doctype": "Sales Invoice",
+	# 		"quickbooks_invoce_id" : qb_orders.get("Id"),
+	# 		"naming_series": "SINV-",
+	# 		"currency" : qb_orders.get("CurrencyRef").get('value') if qb_orders.get("CurrencyRef") else default_currency,
+	# 		"conversion_rate" : qb_orders.get("ExchangeRate") if qb_orders.get("CurrencyRef") else 1,
+	# 		"quickbooks_invoice_no" : qb_orders.get("DocNumber"),
+	# 		"title": frappe.db.get_value("Customer",{"quickbooks_cust_id":qb_orders['CustomerRef'].get('value')},"name"),
+	# 		"customer": frappe.db.get_value("Customer",{"quickbooks_cust_id":qb_orders['CustomerRef'].get('value')},"name"),
+	# 		"posting_date": qb_orders.get('TxnDate'),
+	# 		"due_date": qb_orders.get('DueDate'),
+	# 		"territory" : frappe.db.get_value("Customer",{"quickbooks_cust_id":qb_orders['CustomerRef'].get('value')},"territory"),
+	# 		"selling_price_list": quickbooks_settings.selling_price_list,
+	# 		"ignore_pricing_rule": 1,
+	# 		"update_stock": 1,
+	# 		"apply_discount_on": "Net Total",
+	# 		"items": get_order_items(qb_orders['Line'], quickbooks_settings),
+	# 		"taxes": get_individual_item_tax(qb_orders, qb_orders['Line'], quickbooks_settings),
+	# 		"tc_name": term.get('name') if term else "",
+	# 		"terms": term.get('terms')if term else ""
+
+	# 	})
+		
+	# 	if qb_orders.get('BillAddr'):
+	# 		if not qb_orders.get('BillAddr').has_key("Long"):
+	# 			if not (qb_orders.get('BillAddr').has_key("Country") or qb_orders.get('BillAddr').has_key("City")):
+	# 				full_address, index = new_address_creation(qb_orders, si)
+	# 				if index != False:
+	# 					si.customer_address = create_address(full_address, si, qb_orders.get('BillAddr'), "Billing", index)
+	# 					si.address_display = full_address
+	# 				else:
+	# 					si.customer_address = get_address_name(full_address)
+	# 					si.address_display = full_address
+
+	# 	set_debit_to(si, qb_orders, quickbooks_settings, default_currency)
+
+	# 	si.flags.ignore_mandatory = True
+	# 	si.save(ignore_permissions=True)
+	# 	si.submit()
+	# 	quickbooks_invoice_list.append(qb_orders.get("id"))
+	# 	frappe.db.commit()	
 	return quickbooks_invoice_list
 
 
@@ -100,7 +161,8 @@ def set_debit_to(si, qb_orders, quickbooks_settings, default_currency):
 	if party_currency:
 		debtors_account = frappe.db.get_value("Account", {"account_currency": party_currency, "quickbooks_account_id": ["!=",""], 'account_type': 'Receivable',\
 			"company": quickbooks_settings.select_company, "root_type": "Asset", "is_group": "0"}, "name")
-		si.debit_to = debtors_account
+		si.debit_to = "Accounts Receivable - qb - AALDC"
+		# si.debit_to = debtors_account
 
 
 def new_address_creation(qb_orders, si):
@@ -184,11 +246,12 @@ def get_individual_item_tax(qb_orders, order_items, quickbooks_settings):
 	return taxes
 
 def get_order_items(order_items, quickbooks_settings):
+	''' Need To Fix '''
  	items = []
  	for qb_item in order_items:
  		shipp_item = qb_item.get('SalesItemLineDetail').get('ItemRef').get('value') if qb_item.get('SalesItemLineDetail') else 1
 		if qb_item.get('SalesItemLineDetail') and shipp_item !="SHIPPING_ITEM_ID":
-		 	item_tax_rate, quickbooks_tax_code_ref, quickbooks__tax_code_value = tax_code_ref(qb_item, quickbooks_settings)
+		 	# item_tax_rate, quickbooks_tax_code_ref, quickbooks__tax_code_value = tax_code_ref(qb_item, quickbooks_settings)
 			item_code = get_item_code(qb_item)
 			items.append({
 				"item_code": item_code.get('item_code'),
@@ -199,10 +262,35 @@ def get_order_items(order_items, quickbooks_settings):
 				"income_account": quickbooks_settings.cash_bank_account,
 				"warehouse": quickbooks_settings.warehouse,
 				"stock_uom": _("Nos"),
-				"item_tax_rate": '{0}'.format(json.dumps(item_tax_rate)),
-				"quickbooks_tax_code_ref": quickbooks_tax_code_ref,
-				"quickbooks__tax_code_value": quickbooks__tax_code_value
+				"amount":qb_item.get('Amount'),
+				"uom":_("Nos"),
+				"base_net_rate": qb_item.get('SalesItemLineDetail').get('UnitPrice') if qb_item.get('SalesItemLineDetail').get('UnitPrice') else qb_item.get('Amount'),
+				"base_net_amount":qb_item.get('Amount'),
+				# "item_tax_rate": '{0}'.format(json.dumps(item_tax_rate)),
+				# "quickbooks_tax_code_ref": quickbooks_tax_code_ref,
+				#"quickbooks__tax_code_value": quickbooks__tax_code_value
 			})
+
+ 	# items = []
+ 	# for qb_item in order_items:
+ 	# 	shipp_item = qb_item.get('SalesItemLineDetail').get('ItemRef').get('value') if qb_item.get('SalesItemLineDetail') else 1
+		# if qb_item.get('SalesItemLineDetail') and shipp_item !="SHIPPING_ITEM_ID":
+		#  	item_tax_rate, quickbooks_tax_code_ref, quickbooks__tax_code_value = tax_code_ref(qb_item, quickbooks_settings)
+		# 	item_code = get_item_code(qb_item)
+		# 	items.append({
+		# 		"item_code": item_code.get('item_code'),
+		# 		"item_name": item_code.get('item_name') if item_code else item_code.get('item_code'),
+		# 		"description": qb_item.get('Description') if qb_item.get('Description') else item_code.get('item_name'),
+		# 		"rate": qb_item.get('SalesItemLineDetail').get('UnitPrice') if qb_item.get('SalesItemLineDetail').get('UnitPrice') else qb_item.get('Amount'),
+		# 		"qty": qb_item.get('SalesItemLineDetail').get('Qty') if qb_item.get('SalesItemLineDetail').get('Qty') else 1,
+		# 		"income_account": quickbooks_settings.cash_bank_account,
+		# 		"warehouse": quickbooks_settings.warehouse,
+		# 		"stock_uom": _("Nos"),
+		# 		"item_tax_rate": '{0}'.format(json.dumps(item_tax_rate)),
+		# 		"quickbooks_tax_code_ref": quickbooks_tax_code_ref,
+		# 		"quickbooks__tax_code_value": quickbooks__tax_code_value
+		# 	})
+	# print "items",items
 	return items
 
 def get_order_shipping_detail(order_items, quickbooks_settings):
@@ -255,7 +343,7 @@ def get_tax_head_mapped_to_particular_account(tax_head, quickbooks_settings):
 
 def get_item_code(qb_item):
 	#item_code = frappe.db.get_value("Item", {"quickbooks_variant_id": qb_item.get("variant_id")}, "item_code")
-	#if not item_code:
+	#if not" item_code:
 	quickbooks_item_id = qb_item.get('SalesItemLineDetail').get('ItemRef').get('value') if qb_item.get('SalesItemLineDetail') else ''
 	item_code = frappe.db.get_value("Item", {"quickbooks_item_id": quickbooks_item_id}, ["item_code","item_name"],as_dict=1)
 	return item_code

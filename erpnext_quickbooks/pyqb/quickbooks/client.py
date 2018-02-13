@@ -31,7 +31,8 @@ class QuickBooks(object):
 
     qbService = None
 
-    sandbox_api_url_v3 = "https://sandbox-quickbooks.api.intuit.com/v3"
+    # sandbox_api_url_v3 = "https://sandbox-quickbooks.api.intuit.com/v3"
+    sandbox_api_url_v3 = "https://quickbooks.api.intuit.com/v3"
     api_url_v3 = "https://quickbooks.api.intuit.com/v3"
 
     request_token_url = "https://oauth.intuit.com/oauth/v1/get_request_token"

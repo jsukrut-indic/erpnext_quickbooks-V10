@@ -16,6 +16,7 @@ def sync_tax_code(quickbooks_obj):
 
 def sync_qb_tax_code(get_qb_tax_code, quickbooks_tax_code_list):
 	for qb_tax_code in get_qb_tax_code:
+		print "qb_tax_code",qb_tax_code
 		if not frappe.db.get_value("QuickBooks TaxCode", {"tax_code_id": qb_tax_code.get('Id')}, "display_name"):
 			create_tax_code(qb_tax_code, quickbooks_tax_code_list)
 
@@ -23,16 +24,24 @@ def sync_qb_tax_code(get_qb_tax_code, quickbooks_tax_code_list):
 def create_tax_code(qb_tax_code, quickbooks_tax_code_list):
 	""" store TaxCode data in ERPNEXT """ 
 	tax_code = None
-	try:	
-		tax_code = frappe.get_doc({
-			"doctype": "QuickBooks TaxCode",
-			"display_name": qb_tax_code.get('Name'),
-			"tax_code_id": qb_tax_code.get('Id'),
-			"active" : qb_tax_code.get('Active'),
-			"quickbooks_sales_tax_rate_list" : get_quickbooks_sales_tax_rate_list(qb_tax_code),
-			"quickbooks_purchase_tax_rate_list" : get_quickbooks_purchase_tax_rate_list(qb_tax_code)
-		}).insert()
-		
+	try:
+		if qb_tax_code.get('Name') =="NON":
+			tax_code = frappe.get_doc({
+				"doctype": "QuickBooks TaxCode",
+				"display_name": qb_tax_code.get('Name'),
+				"tax_code_id": qb_tax_code.get('Id'),
+				"active" : qb_tax_code.get('Active')
+			}).insert()
+		else:	
+			tax_code = frappe.get_doc({
+				"doctype": "QuickBooks TaxCode",
+				"display_name": qb_tax_code.get('Name'),
+				"tax_code_id": qb_tax_code.get('Id'),
+				"active" : qb_tax_code.get('Active'),
+				"quickbooks_sales_tax_rate_list" : get_quickbooks_sales_tax_rate_list(qb_tax_code),
+				"quickbooks_purchase_tax_rate_list" : get_quickbooks_purchase_tax_rate_list(qb_tax_code)
+			}).insert()
+			
 		frappe.db.commit()
 		quickbooks_tax_code_list.append(tax_code.tax_code_id)
 

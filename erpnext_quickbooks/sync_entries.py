@@ -9,8 +9,10 @@ from erpnext.accounts.doctype.journal_entry.journal_entry import get_payment_ent
 """ Create Payment entry against Sales Invoices"""
 def sync_si_payment(quickbooks_obj):
 	"""Get all Payment(Payment Entry) from QuickBooks for all the Received Payment"""
+	
 	business_objects = "Payment"
 	get_qb_payment = pagination(quickbooks_obj, business_objects)
+	print "get_qb_payment",get_qb_payment
 	if get_qb_payment: 
 		get_payment_received= get_payment_dict(get_qb_payment)
 		if get_payment_received:
