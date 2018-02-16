@@ -12,8 +12,8 @@ def sync_pi_orders(quickbooks_obj):
 	quickbooks_purchase_invoice_list =[] 
 	business_objects = "Bill"
 	get_qb_purchase_invoice =  pagination(quickbooks_obj, business_objects)
-	# if get_qb_purchase_invoice:
-	# 	sync_qb_pi_orders(get_qb_purchase_invoice, quickbooks_purchase_invoice_list)
+	if get_qb_purchase_invoice:
+		sync_qb_pi_orders(get_qb_purchase_invoice, quickbooks_purchase_invoice_list)
 
 def sync_qb_pi_orders(get_qb_purchase_invoice, quickbooks_purchase_invoice_list):
 	quickbooks_settings = frappe.get_doc("Quickbooks Settings", "Quickbooks Settings")

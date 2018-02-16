@@ -83,7 +83,8 @@ app_license = "GNU GPL v3.0"
 
 scheduler_events = {
 	"hourly": [
-		"erpnext_quickbooks.api.sync_quickbooks"
+		"erpnext_quickbooks.api.sync_quickbooks",
+		"erpnext_quickbooks.api.sync_account_masters"
 	]
 }
 

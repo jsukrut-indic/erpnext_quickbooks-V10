@@ -127,15 +127,19 @@ def sync_from_quickbooks_to_erp(quickbooks_settings):
 	
 	sync_pi_orders(quickbooks_obj)
 	sync_si_orders(quickbooks_obj)
+	sync_payments(quickbooks_objects)
+ 	sync_bill_payments(quickbooks_objects)
 	
-	sync_credit_notes(quickbooks_obj)
-	sync_supplier_credits(quickbooks_obj)
+	# sync_credit_notes(quickbooks_obj)
+	# sync_supplier_credits(quickbooks_obj)
 
-	sync_pi_payment(quickbooks_obj)
-	sync_si_payment(quickbooks_obj)
+	# sync_pi_payment(quickbooks_obj)
+	# sync_si_payment(quickbooks_obj)
+	# sync_payments(quickbooks_objects)
+ # 	sync_bill_payments(quickbooks_objects)
 
-	sync_expenses(quickbooks_obj)
-	sync_entry(quickbooks_obj)
+	# sync_expenses(quickbooks_obj)
+	# sync_entry(quickbooks_obj)
 
 def validate_quickbooks_settings(quickbooks_settings):
 	"""
@@ -179,14 +183,22 @@ def sync_account_masters():
 	    company_id=quickbooks_settings.realm_id,
 	    minorversion=3
 	)
-	# creates_qb_accounts_heads_to_erp_chart_of_accounts()
-	# sync_taxagency(quickbooks_objects)
- 	sync_si_orders(quickbooks_objects)
- 	sync_payments(quickbooks_objects)
+	creates_qb_accounts_heads_to_erp_chart_of_accounts()
+	sync_taxagency(quickbooks_objects)
+	sync_tax_rate(quickbooks_objects)
+	sync_tax_code(quickbooks_objects)
+	sync_Account(quickbooks_objects)
+	sync_payments(quickbooks_objects)
  	# sync_bill_payments(quickbooks_objects)
+	
+	# sync_Account(quickbooks_objects)
+	# sync_taxagency(quickbooks_objects)
 	# sync_tax_rate(quickbooks_objects)
 	# sync_tax_code(quickbooks_objects)
 	# sync_Account(quickbooks_objects)
+	# sync_si_orders(quickbooks_objects)
+ # 	sync_payments(quickbooks_objects)
+ # 	sync_bill_payments(quickbooks_objects)
 	#create_Employee(quickbooks_objects)
 	# sync_items(quickbooks_objects)
 	# sync_pi_orders(quickbooks_objects)
