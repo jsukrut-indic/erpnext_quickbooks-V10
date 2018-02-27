@@ -124,22 +124,10 @@ def sync_from_quickbooks_to_erp(quickbooks_settings):
 	sync_terms(quickbooks_obj)
 	create_Employee(quickbooks_obj)
 	sync_items(quickbooks_obj)
-	
 	sync_pi_orders(quickbooks_obj)
 	sync_si_orders(quickbooks_obj)
-	sync_payments(quickbooks_objects)
- 	sync_bill_payments(quickbooks_objects)
-	
-	# sync_credit_notes(quickbooks_obj)
-	# sync_supplier_credits(quickbooks_obj)
-
-	# sync_pi_payment(quickbooks_obj)
-	# sync_si_payment(quickbooks_obj)
-	# sync_payments(quickbooks_objects)
- # 	sync_bill_payments(quickbooks_objects)
-
-	# sync_expenses(quickbooks_obj)
-	# sync_entry(quickbooks_obj)
+	sync_payments(quickbooks_obj)
+	# sync_bill_payments(quickbooks_objects)
 
 def validate_quickbooks_settings(quickbooks_settings):
 	"""
@@ -188,23 +176,16 @@ def sync_account_masters():
 	sync_tax_rate(quickbooks_objects)
 	sync_tax_code(quickbooks_objects)
 	sync_Account(quickbooks_objects)
+	#-----------------------------------------------------
+	sync_customers(quickbooks_objects)
+	sync_suppliers(quickbooks_objects)
+	sync_terms(quickbooks_objects)
+	create_Employee(quickbooks_objects)
+	sync_items(quickbooks_objects)
+	sync_si_orders(quickbooks_objects)
+	sync_pi_orders(quickbooks_objects)
 	sync_payments(quickbooks_objects)
- 	# sync_bill_payments(quickbooks_objects)
-	
-	# sync_Account(quickbooks_objects)
-	# sync_taxagency(quickbooks_objects)
-	# sync_tax_rate(quickbooks_objects)
-	# sync_tax_code(quickbooks_objects)
-	# sync_Account(quickbooks_objects)
-	# sync_si_orders(quickbooks_objects)
- # 	sync_payments(quickbooks_objects)
- # 	sync_bill_payments(quickbooks_objects)
-	#create_Employee(quickbooks_objects)
-	# sync_items(quickbooks_objects)
-	# sync_pi_orders(quickbooks_objects)
-	# sync_entry(quickbooks_objects)
-	# sync_expenses(quickbooks_objects)
-	# sync_entry(quickbooks_objects)
+	# sync_bill_payments(quickbooks_objects)
 
 	frappe.db.set_value("Quickbooks Settings", None, "sync_master", 1)
 	frappe.db.commit()

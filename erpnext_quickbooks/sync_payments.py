@@ -16,6 +16,7 @@ def sync_payments(quickbooks_obj):
 	business_objects = "Payment"
 	get_qb_payments =  pagination(quickbooks_obj, business_objects)
 	if get_qb_payments:
+		# print " NO Of Payments" ,len(get_qb_payments)
 		sync_qb_si_payments(get_qb_payments, quickbooks_invoice_list)
 
 def sync_qb_si_payments(get_qb_payments, quickbooks_payment_list):
@@ -37,7 +38,7 @@ def create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_
 		if not 	frappe.db.get_value("Journal Entry", {"quickbooks_payment_id": qb_payment_id}, "name"): 
 			print " Inprocess for create_jv_from_qb_payment "
 			journal = frappe.new_doc("Journal Entry")
-			journal.qb_payment_id = qb_payment_id
+			journal.quickbooks_payment_id = qb_payment_id
 			journal.voucher_type = _("Journal Entry")
 			journal.naming_series = "JE-Quickbooks-"
 			journal.posting_date = qb_payment.get('TxnDate')
@@ -46,7 +47,7 @@ def create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_
 			journal.total_credit =  qb_payment.get('TotalAmt')
 			get_journal_entry_accounts(journal, qb_payment, quickbooks_settings)
 			# journal.flags.ignore_validate = True
-			# journal.flags.ignore_mandatory = True
+			journal.flags.ignore_mandatory = True
 			print "journal",journal.__dict__
 			print "Account",journal.accounts[0].__dict__
 			print "Account",journal.accounts[1].__dict__
@@ -54,7 +55,7 @@ def create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_
 			print "journal",journal.name
 			journal.submit()
 			frappe.db.commit()
-			quickbooks_payment_list.append(journal.qb_payment_id)
+			quickbooks_payment_list.append(journal.quickbooks_payment_id)
 	except Exception, e:
 		if e.args[0] and e.args[0].startswith("402"):
 			raise e
@@ -64,12 +65,12 @@ def create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_
 	
 def get_journal_entry_accounts(journal, qb_payment, quickbooks_settings):
 	# print  "journal, qb_journal_entry, quickbooks_settings",journal, qb_journal_entry, quickbooks_settings
-	print " Inprocess for get_journal_entry_accounts "
+	# print " Inprocess for get_journal_entry_accounts "
 	debit_entry = credit_entry = 1
 	company_name = frappe.defaults.get_defaults().get("company")
 	si_name = frappe.db.get_value("Sales Invoice", {"quickbooks_invoice_no": qb_payment.get('Line')[0].get('LineEx').get('any')[2].get('value').get('Value')}, "name")
-	print "company_name",company_name
-	print "si_name",si_name
+	# print "company_name",company_name
+	# print "si_name",si_name
 	if si_name:
 		debit_to = frappe.db.get_value("Sales Invoice", {"name": si_name}, "debit_to")
 		income_account = frappe.db.get_value("Sales Invoice Item", {"parent": si_name}, "income_account")
