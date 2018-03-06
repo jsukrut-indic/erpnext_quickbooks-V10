@@ -185,32 +185,9 @@ def sync_account_masters():
 	sync_si_orders(quickbooks_objects)
 	sync_pi_orders(quickbooks_objects)
 	sync_payments(quickbooks_objects)
-	# sync_bill_payments(quickbooks_objects)
+	sync_bill_payments(quickbooks_objects)
 
 	frappe.db.set_value("Quickbooks Settings", None, "sync_master", 1)
 	frappe.db.commit()
 	return True
 
-@frappe.whitelist()
-def submit_pi():
-	pi_doc = frappe.get_doc("Purchase Invoice","PINV-03508")
-	print "Purchase Invoice ",pi_doc.__dict__
-	pi_doc.flags.ignore_validate = True
-	pi_doc.submit()
-
-@frappe.whitelist()
-def submit_si():
-	si_doc = frappe.get_doc("Sales Invoice","SINV-04139")
-	print "Sales Invoice ",si_doc.__dict__
-	print "\n\n\n__________________________-------"
-	si_doc.flags.ignore_validate = True
-	si_doc.submit()
-
-@frappe.whitelist()
-def create_jv():
-	data = {u'SyncToken': u'0', u'domain': u'QBO', u'DepositToAccountRef': {u'value': u'6'}, u'UnappliedAmt': 0, u'TxnDate': u'2018-02-01', u'TotalAmt': 360637.14, u'CurrencyRef': {u'name': u'United States Dollar', u'value': u'USD'}, u'ProcessPayment': False, u'sparse': False, u'Line': [{u'Amount': 360637.14, u'LineEx': {u'any': [{u'name': u'{http://schema.intuit.com/finance/v3}NameValue', u'nil': False, u'value': {u'Name': u'txnId', u'Value': u'16792'}, u'declaredType': u'com.intuit.schema.finance.v3.NameValue', u'scope': u'javax.xml.bind.JAXBElement$GlobalScope', u'globalScope': True, u'typeSubstituted': False}, {u'name': u'{http://schema.intuit.com/finance/v3}NameValue', u'nil': False, u'value': {u'Name': u'txnOpenBalance', u'Value': u'360637.14'}, u'declaredType': u'com.intuit.schema.finance.v3.NameValue', u'scope': u'javax.xml.bind.JAXBElement$GlobalScope', u'globalScope': True, u'typeSubstituted': False}, {u'name': u'{http://schema.intuit.com/finance/v3}NameValue', u'nil': False, u'value': {u'Name': u'txnReferenceNumber', u'Value': u'1129'}, u'declaredType': u'com.intuit.schema.finance.v3.NameValue', u'scope': u'javax.xml.bind.JAXBElement$GlobalScope', u'globalScope': True, u'typeSubstituted': False}]}, u'LinkedTxn': [{u'TxnId': u'16792', u'TxnType': u'Invoice'}]}], u'CustomerRef': {u'name': u'Amazon Marketplace', u'value': u'392'}, u'Id': u'16823', u'MetaData': {u'CreateTime': u'2018-02-09T16:16:48-08:00', u'LastUpdatedTime': u'2018-02-09T16:16:48-08:00'}}
-	print "data",data
-	print "\n\n\n__________________________"
-
-	si_doc.flags.ignore_validate = True
-	si_doc.submit()

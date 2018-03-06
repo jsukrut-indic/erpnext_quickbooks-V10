@@ -48,9 +48,9 @@ def create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_
 			get_journal_entry_accounts(journal, qb_payment, quickbooks_settings)
 			# journal.flags.ignore_validate = True
 			journal.flags.ignore_mandatory = True
-			print "journal",journal.__dict__
-			print "Account",journal.accounts[0].__dict__
-			print "Account",journal.accounts[1].__dict__
+			# print "journal",journal.__dict__
+			# print "Account",journal.accounts[0].__dict__
+			# print "Account",journal.accounts[1].__dict__
 			journal.save()
 			print "journal",journal.name
 			journal.submit()
@@ -68,28 +68,50 @@ def get_journal_entry_accounts(journal, qb_payment, quickbooks_settings):
 	# print " Inprocess for get_journal_entry_accounts "
 	debit_entry = credit_entry = 1
 	company_name = frappe.defaults.get_defaults().get("company")
-	si_name = frappe.db.get_value("Sales Invoice", {"quickbooks_invoice_no": qb_payment.get('Line')[0].get('LineEx').get('any')[2].get('value').get('Value')}, "name")
-	# print "company_name",company_name
-	# print "si_name",si_name
-	if si_name:
-		debit_to = frappe.db.get_value("Sales Invoice", {"name": si_name}, "debit_to")
-		income_account = frappe.db.get_value("Sales Invoice Item", {"parent": si_name}, "income_account")
-		if debit_entry:
-			default_receivable_account = frappe.db.get_value("Company", {"name": company_name}, "default_receivable_account")
-			account = journal.append("accounts", {})
-			account.account = income_account
-			account.debit_in_account_currency = qb_payment.get('TotalAmt')
-			account.idx = 1		
-		if credit_entry:
-			default_payable_account = frappe.db.get_value("Company", {"name": company_name}, "default_payable_account")
-			account = journal.append("accounts", {})
-			account.credit_in_account_currency = qb_payment.get('TotalAmt')
-			account.account = debit_to
-			account.reference_type = "Sales Invoice"
-			account.reference_name = si_name
-			account.party = qb_payment.get('CustomerRef').get('name')
-			account.party_type ="Customer"
-			account.idx = 2
+	for bill in qb_payment.get('Line'):
+		print ":::::::",bill
+		si_name = frappe.db.get_value("Sales Invoice", {"quickbooks_invoice_no": bill.get('LineEx').get('any')[2].get('value').get('Value')}, "name")
+		print "si_name",si_name
+		if si_name:
+			debit_to = frappe.db.get_value("Sales Invoice", {"name": si_name}, "debit_to")
+			income_account = frappe.db.get_value("Sales Invoice Item", {"parent": si_name}, "income_account")
+			if debit_entry:
+				default_receivable_account = frappe.db.get_value("Company", {"name": company_name}, "default_receivable_account")
+				account = journal.append("accounts", {})
+				account.account = income_account
+				account.debit_in_account_currency = qb_payment.get('TotalAmt')		
+			if credit_entry:
+				default_payable_account = frappe.db.get_value("Company", {"name": company_name}, "default_payable_account")
+				account = journal.append("accounts", {})
+				account.credit_in_account_currency = qb_payment.get('TotalAmt')
+				account.account = debit_to
+				account.reference_type = "Sales Invoice"
+				account.reference_name = si_name
+				account.party = qb_payment.get('CustomerRef').get('name')
+				account.party_type ="Customer"
+
+	# si_name = frappe.db.get_value("Sales Invoice", {"quickbooks_invoice_no": qb_payment.get('Line')[0].get('LineEx').get('any')[2].get('value').get('Value')}, "name")
+	# # print "company_name",company_name
+	# # print "si_name",si_name
+	# if si_name:
+	# 	debit_to = frappe.db.get_value("Sales Invoice", {"name": si_name}, "debit_to")
+	# 	income_account = frappe.db.get_value("Sales Invoice Item", {"parent": si_name}, "income_account")
+	# 	if debit_entry:
+	# 		default_receivable_account = frappe.db.get_value("Company", {"name": company_name}, "default_receivable_account")
+	# 		account = journal.append("accounts", {})
+	# 		account.account = income_account
+	# 		account.debit_in_account_currency = qb_payment.get('TotalAmt')
+	# 		account.idx = 1		
+	# 	if credit_entry:
+	# 		default_payable_account = frappe.db.get_value("Company", {"name": company_name}, "default_payable_account")
+	# 		account = journal.append("accounts", {})
+	# 		account.credit_in_account_currency = qb_payment.get('TotalAmt')
+	# 		account.account = debit_to
+	# 		account.reference_type = "Sales Invoice"
+	# 		account.reference_name = si_name
+	# 		account.party = qb_payment.get('CustomerRef').get('name')
+	# 		account.party_type ="Customer"
+	# 		account.idx = 2
 		
 
 # 	def append_row(row, debit_in_account_currency, credit_in_account_currency):
