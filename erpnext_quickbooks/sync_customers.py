@@ -40,7 +40,9 @@ def create_customer(qb_customer, quickbooks_customer_list):
 			create_customer_address(qb_customer, customer, qb_customer.get("BillAddr"), "Billing", 1)
 		if customer and qb_customer.get('ShipAddr'):
 			create_customer_address(qb_customer, customer, qb_customer.get("ShipAddr"), "Shipping", 2)
-
+		if customer and qb_customer.get('GivenName') and qb_customer.get('PrimaryEmailAddr') and qb_customer.get('PrimaryPhone'):
+			create_customer_contact(qb_customer, customer)
+		
 		frappe.db.commit()
 		quickbooks_customer_list.append(customer.quickbooks_cust_id)
 
@@ -82,10 +84,11 @@ def create_customer_address(qb_customer, customer, address, type_of_address, ind
 			"pincode": address.get("PostalCode"),
 			"country": address.get("Country"),
 			"email_id": qb_customer.get('PrimaryEmailAddr').get('Address') if qb_customer.get('PrimaryEmailAddr') else '',
-			"phone" : qb_customer.get('Mobile').get('FreeFormNumber') if qb_customer.get('Mobile') else '',
-			"customer": customer.name,
-			"customer_name":  customer.customer_name
+			"phone" : qb_customer.get('Mobile').get('FreeFormNumber') if qb_customer.get('Mobile') else ''
 		})
+		links = customer_address.append("links", {})
+		links.link_doctype = "Customer"
+		links.link_name = customer.name
 		customer_address.flags.ignore_mandatory = True
 		customer_address.insert()
 			
@@ -150,3 +153,23 @@ def create_erp_customer_to_quickbooks(quickbooks_obj, erp_cust, Customer_list):
 	customer_obj.save()
 	Customer_list.append(customer_obj)
 	return Customer_list
+
+def create_customer_contact(qb_customer, customer):
+	try :
+		customer_contact= frappe.get_doc({
+			"doctype": "Contact",
+			"first_name": qb_customer.get('GivenName'),
+			"email_id": qb_customer.get('PrimaryEmailAddr').get('Address'),
+			"phone": qb_customer.get('PrimaryPhone').get('FreeFormNumber')
+		})
+		links = customer_contact.append("links", {})
+		links.link_doctype = "Customer"
+		links.link_name = customer.name
+		customer_contact.flags.ignore_mandatory = True
+		customer_contact.insert()
+			
+	except Exception, e:
+		make_quickbooks_log(title=e.message, status="Error", method="create_customer_address", message=frappe.get_traceback(),
+				request_data=qb_customer, exception=True)
+		raise e
+	

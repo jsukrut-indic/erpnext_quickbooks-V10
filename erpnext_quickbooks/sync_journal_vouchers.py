@@ -12,8 +12,6 @@ def sync_entry(quickbooks_obj):
 	# print "________c___quickbooks_obj for sync_si_payment_______________________________________________________________" 
 	Entry = """SELECT count(*) from JournalEntry""" 
 	qb_Entry = quickbooks_obj.query(TxnId)
-	print "qb_Entry",qb_Entry
-	print "qb_Entry",type(qb_Entry),len(qb_Entry['QueryResponse'])
 	if qb_Entry['QueryResponse']:
 		get_qb_Entry =  qb_Entry['QueryResponse']['JournalEntry']
 		# print get_qb_Entry , "-----------------"
@@ -23,7 +21,6 @@ def sync_journal_entries(get_qb_Entry):
 	quickbooks_settings = frappe.get_doc("Quickbooks Settings", "Quickbooks Settings")
 	for qb_journal_entry in get_qb_Entry:
 		if qb_journal_entry.get('Id') == "5886":
-			print "qb_journal_entry",qb_journal_entry
 			create_journal_entry(qb_journal_entry, quickbooks_settings)
 
 def create_journal_entry(qb_journal_entry, quickbooks_settings, quickbooks_journal_entry_list=[]):
@@ -58,7 +55,6 @@ def create_journal_entry(qb_journal_entry, quickbooks_settings, quickbooks_journ
 	return quickbooks_journal_entry_list
 
 def get_journal_entry_accounts(journal, qb_journal_entry, quickbooks_settings):
-	# print  "journal, qb_journal_entry, quickbooks_settings",journal, qb_journal_entry, quickbooks_settings
 	def append_row(row, debit_in_account_currency, credit_in_account_currency):
 		if debit_in_account_currency:
 			debit_credit_entry(debit_in_account_currency)

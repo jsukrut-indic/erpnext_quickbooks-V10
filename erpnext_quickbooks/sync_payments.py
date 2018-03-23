@@ -36,7 +36,6 @@ def create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_
 		qb_payment_id = "JE" + qb_payment.get('Id')
 	try:	
 		if not 	frappe.db.get_value("Journal Entry", {"quickbooks_payment_id": qb_payment_id}, "name"): 
-			print " Inprocess for create_jv_from_qb_payment "
 			journal = frappe.new_doc("Journal Entry")
 			journal.quickbooks_payment_id = qb_payment_id
 			journal.voucher_type = _("Journal Entry")
@@ -48,11 +47,7 @@ def create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_
 			get_journal_entry_accounts(journal, qb_payment, quickbooks_settings)
 			# journal.flags.ignore_validate = True
 			journal.flags.ignore_mandatory = True
-			# print "journal",journal.__dict__
-			# print "Account",journal.accounts[0].__dict__
-			# print "Account",journal.accounts[1].__dict__
 			journal.save()
-			print "journal",journal.name
 			journal.submit()
 			frappe.db.commit()
 			quickbooks_payment_list.append(journal.quickbooks_payment_id)
@@ -69,9 +64,7 @@ def get_journal_entry_accounts(journal, qb_payment, quickbooks_settings):
 	debit_entry = credit_entry = 1
 	company_name = frappe.defaults.get_defaults().get("company")
 	for bill in qb_payment.get('Line'):
-		print ":::::::",bill
 		si_name = frappe.db.get_value("Sales Invoice", {"quickbooks_invoice_no": bill.get('LineEx').get('any')[2].get('value').get('Value')}, "name")
-		print "si_name",si_name
 		if si_name:
 			debit_to = frappe.db.get_value("Sales Invoice", {"name": si_name}, "debit_to")
 			income_account = frappe.db.get_value("Sales Invoice Item", {"parent": si_name}, "income_account")

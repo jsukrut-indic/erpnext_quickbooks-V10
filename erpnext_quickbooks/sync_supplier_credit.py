@@ -144,8 +144,6 @@ def update_stock(line, quickbooks_settings):
 			Account_Detail +=1
 	if Account_Detail > 0 and Item_Detail ==0:
 		is_stock_item = False
-
-	print is_stock_item, "----------------------kkkkkkkkkkkkkkkkkkkkkk"
 	return is_stock_item
 
 def get_item_code(qb_item):

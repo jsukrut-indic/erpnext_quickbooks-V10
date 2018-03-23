@@ -11,9 +11,7 @@ from .utils import make_quickbooks_log, pagination
 def sync_pi_orders(quickbooks_obj):
 	quickbooks_purchase_invoice_list =[] 
 	business_objects = "Bill"
-	get_qb_purchase_invoice =  pagination(quickbooks_obj, business_objects)
-	
-	# get_qb_purchase_invoice = [ {"DocNumber": "21728", "SyncToken": "2", "domain": "QBO", "APAccountRef": {"name": "Accounts Payable", "value": "73"}, "VendorRef": {"name": "River Source, LLC.", "value": "437"}, "LinkedTxn": [{"TxnId": "13152", "TxnType": "BillPaymentCheck"}], "TxnDate": "2017-10-17", "TotalAmt": 420.0, "CurrencyRef": {"name": "United States Dollar", "value": "USD"}, "PrivateNote": "SD-1728", "SalesTermRef": {"value": "3"}, "DueDate": "2017-11-16", "sparse": False, "Line": [{"DetailType": "ItemBasedExpenseLineDetail", "Amount": 420.0, "Id": "1", "ItemBasedExpenseLineDetail": {"TaxCodeRef": {"value": "NON"}, "Qty": 120, "BillableStatus": "NotBillable", "UnitPrice": 3.5, "ItemRef": {"name": "Freight Charge", "value": "16"}}, "Description": "120 cases receiving-Eden Pillow King 480 units"}], "Balance": 0, "Id": "13128", "MetaData": {"CreateTime": "2017-10-31T16:02:48-07:00", "LastUpdatedTime": "2017-10-31T16:09:36-07:00"}}]
+	get_qb_purchase_invoice =  pagination(quickbooks_obj, business_objects)	
 	if get_qb_purchase_invoice:
 		sync_qb_pi_orders(get_qb_purchase_invoice, quickbooks_purchase_invoice_list)
 
@@ -48,8 +46,6 @@ def create_purchase_invoice_order(qb_orders, quickbooks_settings, quickbooks_pur
 
 def create_purchase_invoice(qb_orders, quickbooks_settings, quickbooks_purchase_invoice_list, default_currency=None):
 	stock_item = update_stock(qb_orders['Line'], quickbooks_settings)
-	print "______________________________________________________________________________________"
-	# print "qb_orders",qb_orders
 	total = net_total = grand_total = 0.0
 	total = net_total = grand_total = qb_orders.get('TotalAmt')
 
@@ -79,14 +75,10 @@ def create_purchase_invoice(qb_orders, quickbooks_settings, quickbooks_purchase_
 
 	set_terms(pi, qb_orders)
 	set_credit_to(pi, qb_orders)
-	print "Items ale"
 	pi.flags.ignore_validate = True
 	pi.flags.ignore_mandatory = True
-	print ":--------------------------::--------------------------::--------------------------::--------------------------:"
 	pi.save(ignore_permissions=True)
-	print "Purchase Invoice Save -Name",pi.name
 	pi.submit()
-	print "Purchase Invoice Submit -Name",pi.name
 	quickbooks_purchase_invoice_list.append(qb_orders.get("Id"))
 	frappe.db.commit()	
 	
@@ -261,7 +253,6 @@ def get_order_items(qb_orders, order_items, quickbooks_settings, stock_item):
 				   So during the creation PI in ERPNext, Item details record is populated in Item table and Account details record 
 				   is populated in Tax table.. 
 	"""
-	print "stock_item",stock_item
   	items = []
  	for qb_item in order_items:
  		"""
@@ -270,7 +261,6 @@ def get_order_items(qb_orders, order_items, quickbooks_settings, stock_item):
  		"""
 
  		if qb_item.get('DetailType') == "ItemBasedExpenseLineDetail" and stock_item == True:
- 			print  "ItemBasedExpenseLineDetail",ItemBasedExpenseLineDetail
 			item_tax_rate, quickbooks_tax_code_ref, quickbooks__tax_code_value = item_based_expense_line_detail_tax_code_ref(qb_orders, qb_item, quickbooks_settings)
 			item_code = get_item_code(qb_item)
 			items.append({
@@ -290,20 +280,15 @@ def get_order_items(qb_orders, order_items, quickbooks_settings, stock_item):
 				# "quickbooks_tax_code_ref": quickbooks_tax_code_ref,
 				# "quickbooks__tax_code_value": quickbooks__tax_code_value			
 			})
-			print "item",items
-			print "_=========================================================="
 
 		if qb_item.get('DetailType') == "AccountBasedExpenseLineDetail" and stock_item == False:
 		 	"""
 		 		Get all Account details from PI(bill)
 		 		It will excecute only in case of 2st scenario as explained above
 		 	"""
-		 	print  "AccountBasedExpenseLineDetail",AccountBasedExpenseLineDetail
 			item_tax_rate, quickbooks_tax_code_ref, quickbooks__tax_code_value = account_based_expense_line_detail_tax_code_ref(qb_orders, qb_item, quickbooks_settings)
 		 	quickbooks_account_reference = qb_item.get('AccountBasedExpenseLineDetail').get('AccountRef').get('value')
-		 	print "quickbooks_account_reference",quickbooks_account_reference
 		 	quickbooks_account = frappe.db.get_value("Account", {"quickbooks_account_id" : quickbooks_account_reference}, "name")
-		 	print "quickbooks_account",quickbooks_account
 		 	items.append({
 				"item_name": quickbooks_account,
 				"description":qb_item.get('Description') + _(" Service Item") if qb_item.get('Description') else quickbooks_account,
@@ -321,8 +306,6 @@ def get_order_items(qb_orders, order_items, quickbooks_settings, stock_item):
 				# "quickbooks_tax_code_ref": quickbooks_tax_code_ref,
 				# "quickbooks__tax_code_value": quickbooks__tax_code_value
 			})
-			print "--------------------------------------------------------------------"
-			print "items",items
 
  		# if qb_item.get('DetailType') == "ItemBasedExpenseLineDetail" and stock_item == True:
  		# 	print "ItemBasedExpenseLineDetail"
@@ -344,8 +327,7 @@ def get_order_items(qb_orders, order_items, quickbooks_settings, stock_item):
 			# 	# "quickbooks_tax_code_ref": quickbooks_tax_code_ref,
 			# 	# "quickbooks__tax_code_value": quickbooks__tax_code_value			
 			# })
-			# print "#################################################################################"
-			# print "item",items
+		
 		# if qb_item.get('DetailType') == "AccountBasedExpenseLineDetail" and stock_item == False:
 		# 	print "\nAccountBasedExpenseLineDetail",AccountBasedExpenseLineDetail
 		#  	"""

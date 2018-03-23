@@ -18,26 +18,22 @@ def sync_bill_payments(quickbooks_obj):
 		sync_qb_bill_payments(get_qb_payments, quickbooks_bill_payment_list)
 
 def sync_qb_bill_payments(get_qb_payments, quickbooks_bill_payment_list):
-	print "billing"
 	company_name = frappe.defaults.get_defaults().get("company")
 	default_currency = frappe.db.get_value("Company" ,{"name":company_name},"default_currency")
 	quickbooks_settings = frappe.get_doc("Quickbooks Settings", "Quickbooks Settings")
 	for qb_payment in get_qb_payments:
 		try:
-			# print "_____________________________________________________________________________"
 			create_jv_from_qb_billpayment(qb_payment,quickbooks_settings,quickbooks_bill_payment_list)
 		except Exception, e:
 			make_quickbooks_log(title=e.message, status="Error", method="sync_bill_payments", message=frappe.get_traceback(),
 						request_data=qb_payment, exception=True)
 			
 def create_jv_from_qb_billpayment(qb_payment,quickbooks_settings,quickbooks_bill_payment_list):
-	print "create_jv_from_qb_billpayment"
 	qb_payment_id = ''
 	if qb_payment.get('Id'):
 		qb_payment_id = "JE" + qb_payment.get('Id')
 	try:	
 		if not 	frappe.db.get_value("Journal Entry", {"quickbooks_payment_id": qb_payment_id}, "name"): 
-			print " Inprocess for create_jv_from_qb_payment "
 			journal = frappe.new_doc("Journal Entry")
 			journal.qb_payment_id = qb_payment_id
 			journal.voucher_type = _("Journal Entry")
@@ -49,11 +45,7 @@ def create_jv_from_qb_billpayment(qb_payment,quickbooks_settings,quickbooks_bill
 			get_journal_entry_accounts(journal, qb_payment, quickbooks_settings)
 			# journal.flags.ignore_validate = True
 			journal.flags.ignore_mandatory = True
-			# print "journal",journal.__dict__
-			# print "Account",journal.accounts[0].__dict__
-			# print "Account",journal.accounts[1].__dict__
 			journal.save()
-			print "journal",journal.name
 			journal.submit()
 			frappe.db.commit()
 			quickbooks_bill_payment_list.append(journal.qb_payment_id)
@@ -65,14 +57,10 @@ def create_jv_from_qb_billpayment(qb_payment,quickbooks_settings,quickbooks_bill
 				request_data=qb_payment, exception=True)
 	
 def get_journal_entry_accounts(journal, qb_payment, quickbooks_settings):
-	# print  "journal, qb_journal_entry, quickbooks_settings",journal, qb_journal_entry, quickbooks_settings
 	debit_entry = credit_entry = 1
 	company_name = frappe.defaults.get_defaults().get("company")
-	# print "____________________________",qb_payment
 	for bill in qb_payment.get('Line'):
-		# print ":::::::",bill
 		pi_name = frappe.db.get_value("Purchase Invoice", {"quickbooks_purchase_invoice_id": bill.get('LinkedTxn')[0].get('TxnId')}, "name")
-		# print "pi_name",pi_name
 		if pi_name:
 			credit_to = frappe.db.get_value("Purchase Invoice", {"name": pi_name}, "credit_to")
 	 		expense_account = frappe.db.get_value("Purchase Invoice Item", {"parent": pi_name}, "expense_account")

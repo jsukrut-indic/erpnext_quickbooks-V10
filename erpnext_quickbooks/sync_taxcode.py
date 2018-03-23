@@ -16,7 +16,6 @@ def sync_tax_code(quickbooks_obj):
 
 def sync_qb_tax_code(get_qb_tax_code, quickbooks_tax_code_list):
 	for qb_tax_code in get_qb_tax_code:
-		print "qb_tax_code",qb_tax_code
 		if not frappe.db.get_value("QuickBooks TaxCode", {"tax_code_id": qb_tax_code.get('Id')}, "display_name"):
 			create_tax_code(qb_tax_code, quickbooks_tax_code_list)
 

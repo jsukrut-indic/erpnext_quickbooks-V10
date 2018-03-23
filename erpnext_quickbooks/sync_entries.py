@@ -12,7 +12,6 @@ def sync_si_payment(quickbooks_obj):
 	
 	business_objects = "Payment"
 	get_qb_payment = pagination(quickbooks_obj, business_objects)
-	print "get_qb_payment",get_qb_payment
 	if get_qb_payment: 
 		get_payment_received= get_payment_dict(get_qb_payment)
 		if get_payment_received:

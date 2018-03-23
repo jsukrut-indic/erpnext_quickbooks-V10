@@ -46,7 +46,6 @@ def pagination(quickbooks_obj, business_objects):
 		condition = " Where Active IN (true, false)"
 	q ="""SELECT count(*) from {0} {1} """.format(business_objects, condition)
 	record_count = quickbooks_obj.query("""SELECT count(*) from {0} {1} """.format(business_objects, condition))
-	print "Record Count",record_count
 	total_record = record_count['QueryResponse']['totalCount']
 	limit_count = 90
 	total_page = total_record / limit_count if total_record % limit_count == 0 else total_record / limit_count + 1

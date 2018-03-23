@@ -21,7 +21,6 @@ def sync_qb_suppliers(get_qb_supplier, quickbooks_supplier_list):
 		if not frappe.db.get_value("Supplier", {"quickbooks_supp_id": qb_supplier.get('Id')}, "name"):
 			create_Supplier(qb_supplier, quickbooks_supplier_list)
 
-
 def create_Supplier(qb_supplier, quickbooks_supplier_list):
 	""" Store Supplier Data in ERPNEXT """ 
 	supplier = None
@@ -39,6 +38,8 @@ def create_Supplier(qb_supplier, quickbooks_supplier_list):
 
 		if supplier and qb_supplier.get('BillAddr'):
 			create_supplier_address(qb_supplier, supplier, qb_supplier.get("BillAddr"), "Billing", 1)
+		# if supplier and qb_supplier.get('GivenName'):
+		# 	create_supplier_contact(qb_supplier,supplier)
 		
 		frappe.db.commit()
 		quickbooks_supplier_list.append(supplier.quickbooks_supp_id)
@@ -81,9 +82,11 @@ def create_supplier_address(qb_supplier, supplier, address, type_of_address, ind
 			"country": address.get("Country"),
 			"email_id": qb_supplier.get('PrimaryEmailAddr').get('Address') if qb_supplier.get('PrimaryEmailAddr') else '',
 			"phone" : qb_supplier.get('Mobile').get('FreeFormNumber') if qb_supplier.get('Mobile') else '',
-			"supplier": supplier.name,
-			"supplier_name": supplier.name
 		})
+
+		links = supplier_address.append("links", {})
+		links.link_doctype = "Supplier"
+		links.link_name = supplier.name
 		supplier_address.flags.ignore_mandatory = True
 		supplier_address.insert()
 			
@@ -146,3 +149,22 @@ def create_erp_suppliers_to_quickbooks(erp_supplier, Supplier_list):
 	Supplier_list.append(supplier_obj)
 	return Supplier_list
 
+def create_supplier_contact(qb_supplier, supplier):
+	try :
+		supplier_contact= frappe.get_doc({
+			"doctype": "Contact",
+			"first_name": qb_supplier.get('GivenName'),
+			"email_id": qb_supplier.get('PrimaryEmailAddr').get('Address'),
+			"phone": qb_supplier.get('PrimaryPhone').get('FreeFormNumber')
+		})
+		links = supplier_contact.append("links", {})
+		links.link_doctype = "Supplier"
+		links.link_name = supplier.name
+		supplier_contact.flags.ignore_mandatory = True
+		supplier_contact.insert()
+			
+	except Exception, e:
+		make_quickbooks_log(title=e.message, status="Error", method="create_customer_address", message=frappe.get_traceback(),
+				request_data=qb_supplier, exception=True)
+		raise e
+	
