@@ -25,12 +25,16 @@ def sync_qb_si_payments(get_qb_payments, quickbooks_payment_list):
 	quickbooks_settings = frappe.get_doc("Quickbooks Settings", "Quickbooks Settings")
 	for qb_payment in get_qb_payments:
 		try:
+			# if qb_payment.get('PaymentRefNum') == 'check#5487':
+			# 	print "____________________________________________________________________________________-"			
+			# 	print "qb_payment",qb_payment
 			create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_list)
 		except Exception, e:
 			make_quickbooks_log(title=e.message, status="Error", method="sync_qb_si_payments", message=frappe.get_traceback(),
 						request_data=qb_payment, exception=True)
 			
 def create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_list):
+	# print "In Create_jv_from_qb_payment"
 	qb_payment_id = ''
 	if qb_payment.get('Id'):
 		qb_payment_id = "JE" + qb_payment.get('Id')
@@ -45,8 +49,11 @@ def create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_
 			journal.total_debit = qb_payment.get('TotalAmt')
 			journal.total_credit =  qb_payment.get('TotalAmt')
 			get_journal_entry_accounts(journal, qb_payment, quickbooks_settings)
+			# print "_____________________after_____get_journal_entry_accounts________"
+			# for row in journal.accounts:
+			# 	print "row",row.__dict__
 			# journal.flags.ignore_validate = True
-			journal.flags.ignore_mandatory = True
+			# journal.flags.ignore_mandatory = True
 			journal.save()
 			journal.submit()
 			frappe.db.commit()
@@ -64,19 +71,20 @@ def get_journal_entry_accounts(journal, qb_payment, quickbooks_settings):
 	debit_entry = credit_entry = 1
 	company_name = frappe.defaults.get_defaults().get("company")
 	for bill in qb_payment.get('Line'):
+		# print "\n\n",bill
 		si_name = frappe.db.get_value("Sales Invoice", {"quickbooks_invoice_no": bill.get('LineEx').get('any')[2].get('value').get('Value')}, "name")
 		if si_name:
 			debit_to = frappe.db.get_value("Sales Invoice", {"name": si_name}, "debit_to")
-			income_account = frappe.db.get_value("Sales Invoice Item", {"parent": si_name}, "income_account")
+			cash_account = frappe.db.get_value("Company", {"name": company_name}, "default_bank_account")
 			if debit_entry:
 				default_receivable_account = frappe.db.get_value("Company", {"name": company_name}, "default_receivable_account")
 				account = journal.append("accounts", {})
-				account.account = income_account
-				account.debit_in_account_currency = qb_payment.get('TotalAmt')		
+				account.account = cash_account
+				account.debit_in_account_currency = bill.get('Amount')		
 			if credit_entry:
 				default_payable_account = frappe.db.get_value("Company", {"name": company_name}, "default_payable_account")
 				account = journal.append("accounts", {})
-				account.credit_in_account_currency = qb_payment.get('TotalAmt')
+				account.credit_in_account_currency = bill.get('Amount')
 				account.account = debit_to
 				account.reference_type = "Sales Invoice"
 				account.reference_name = si_name

@@ -44,7 +44,7 @@ def create_jv_from_qb_billpayment(qb_payment,quickbooks_settings,quickbooks_bill
 			journal.total_credit =  qb_payment.get('TotalAmt')
 			get_journal_entry_accounts(journal, qb_payment, quickbooks_settings)
 			# journal.flags.ignore_validate = True
-			journal.flags.ignore_mandatory = True
+			# journal.flags.ignore_mandatory = True
 			journal.save()
 			journal.submit()
 			frappe.db.commit()
@@ -62,24 +62,21 @@ def get_journal_entry_accounts(journal, qb_payment, quickbooks_settings):
 	for bill in qb_payment.get('Line'):
 		pi_name = frappe.db.get_value("Purchase Invoice", {"quickbooks_purchase_invoice_id": bill.get('LinkedTxn')[0].get('TxnId')}, "name")
 		if pi_name:
+			cash_account = frappe.db.get_value("Company", {"name": company_name}, "default_bank_account")
 			credit_to = frappe.db.get_value("Purchase Invoice", {"name": pi_name}, "credit_to")
-	 		expense_account = frappe.db.get_value("Purchase Invoice Item", {"parent": pi_name}, "expense_account")
-			if credit_entry:
-				default_payable_account = frappe.db.get_value("Company", {"name": company_name}, "default_payable_account")
+	 		# expense_account = frappe.db.get_value("Purchase Invoice Item", {"parent": pi_name}, "expense_account")
+			if debit_entry:
 				account = journal.append("accounts", {})
-				account.account = default_payable_account
+				account.account = credit_to
 				account.reference_type = "Purchase Invoice"
 				account.reference_name = pi_name
 				account.party = qb_payment.get('VendorRef').get('name')
 				account.party_type ="Supplier"
-				account.debit_in_account_currency = qb_payment.get('TotalAmt')
-			if debit_entry:
-				default_payable_account = frappe.db.get_value("Company", {"name": company_name}, "default_payable_account")
+				account.debit_in_account_currency = bill.get('Amount')
+			if credit_entry:
 				account = journal.append("accounts", {})
-				account.credit_in_account_currency = qb_payment.get('TotalAmt')
-				account.account = expense_account
-				account.reference_type = "Purchase Invoice"
-				
+				account.credit_in_account_currency = bill.get('Amount')
+				account.account = cash_account
 
 	# print " Inprocess for get_journal_entry_accounts "
 	# debit_entry = credit_entry = 1
