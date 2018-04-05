@@ -20,8 +20,7 @@ def sync_entry(quickbooks_obj):
 def sync_journal_entries(get_qb_Entry):
 	quickbooks_settings = frappe.get_doc("Quickbooks Settings", "Quickbooks Settings")
 	for qb_journal_entry in get_qb_Entry:
-		if qb_journal_entry.get('Id') == "5886":
-			create_journal_entry(qb_journal_entry, quickbooks_settings)
+		create_journal_entry(qb_journal_entry, quickbooks_settings)
 
 def create_journal_entry(qb_journal_entry, quickbooks_settings, quickbooks_journal_entry_list=[]):
 	""" store JournalEntry data in ERPNEXT """ 

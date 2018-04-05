@@ -50,17 +50,24 @@ def pagination(quickbooks_obj, business_objects):
 	limit_count = 90
 	total_page = total_record / limit_count if total_record % limit_count == 0 else total_record / limit_count + 1
 	startposition , maxresults = 0, 0  
-	for i in range(total_page):
-		maxresults = startposition + limit_count
-		if business_objects in ["Customer", "Vendor", "Item", "Employee"]:
-			group_by = condition + " ORDER BY Id ASC STARTPOSITION {1} MAXRESULTS {2}".format(business_objects, startposition, maxresults)
-		else:
-			group_by = " ORDER BY Id ASC STARTPOSITION {1} MAXRESULTS {2}".format(business_objects, startposition, maxresults)
-		query_result = """SELECT * FROM {0} {1}""".format(business_objects, group_by)
-		TxnId = "select * from Payment where TxnId = '16483'"
-		qb_data = quickbooks_obj.query(query_result)
+	if business_objects == 'Purchase':
+		query = "SELECT * FROM Purchase"
+		qb_data = quickbooks_obj.query(query)
 		qb_result =  qb_data['QueryResponse']
 		if qb_result:
-			quickbooks_result_set.extend(qb_result[business_objects])
-		startposition = startposition + limit_count
+				quickbooks_result_set.extend(qb_result[business_objects])
+	else:
+		for i in range(total_page):
+			maxresults = startposition + limit_count
+			if business_objects in ["Customer", "Vendor", "Item", "Employee"]:
+				group_by = condition + " ORDER BY Id ASC STARTPOSITION {1} MAXRESULTS {2}".format(business_objects, startposition, maxresults)
+			else:
+				group_by = " ORDER BY Id ASC STARTPOSITION {1} MAXRESULTS {2}".format(business_objects, startposition, maxresults)
+			query_result = """SELECT * FROM {0} {1}""".format(business_objects, group_by)
+			TxnId = "select * from Payment where TxnId = '16483'"
+			qb_data = quickbooks_obj.query(query_result)
+			qb_result =  qb_data['QueryResponse']
+			if qb_result:
+				quickbooks_result_set.extend(qb_result[business_objects])
+			startposition = startposition + limit_count
 	return quickbooks_result_set

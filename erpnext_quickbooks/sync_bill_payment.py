@@ -59,10 +59,14 @@ def create_jv_from_qb_billpayment(qb_payment,quickbooks_settings,quickbooks_bill
 def get_journal_entry_accounts(journal, qb_payment, quickbooks_settings):
 	debit_entry = credit_entry = 1
 	company_name = frappe.defaults.get_defaults().get("company")
+	BankAccountRef = qb_payment.get('CheckPayment').get('BankAccountRef').get('value')
+	if BankAccountRef:
+		cash_account = frappe.db.get_value("Account",{"quickbooks_account_id":BankAccountRef},"name")
 	for bill in qb_payment.get('Line'):
 		pi_name = frappe.db.get_value("Purchase Invoice", {"quickbooks_purchase_invoice_id": bill.get('LinkedTxn')[0].get('TxnId')}, "name")
 		if pi_name:
-			cash_account = frappe.db.get_value("Company", {"name": company_name}, "default_bank_account")
+			if not cash_account:
+				cash_account = frappe.db.get_value("Company", {"name": company_name}, "default_bank_account")
 			credit_to = frappe.db.get_value("Purchase Invoice", {"name": pi_name}, "credit_to")
 	 		# expense_account = frappe.db.get_value("Purchase Invoice Item", {"parent": pi_name}, "expense_account")
 			if debit_entry:
@@ -78,23 +82,3 @@ def get_journal_entry_accounts(journal, qb_payment, quickbooks_settings):
 				account.credit_in_account_currency = bill.get('Amount')
 				account.account = cash_account
 
-	# print " Inprocess for get_journal_entry_accounts "
-	# debit_entry = credit_entry = 1
-	# company_name = frappe.defaults.get_defaults().get("company")
-	# if debit_entry:
-	# 	default_receivable_account = frappe.db.get_value("Company", {"name": company_name}, "default_receivable_account")
-	# 	account = journal.append("accounts", {})
-	# 	account.account = "Sales - AALDC"
-	# 	account.debit_in_account_currency = qb_payment.get('TotalAmt')
-	# 	account.idx = 1		
-	# if credit_entry:
-	# 	default_payable_account = frappe.db.get_value("Company", {"name": company_name}, "default_payable_account")
-	# 	account = journal.append("accounts", {})
-	# 	account.credit_in_account_currency = qb_payment.get('TotalAmt')
-	# 	account.account = default_payable_account
-	# 	account.reference_type = "Sales Invoice"
-	# 	si_name = frappe.db.get_value("Sales Invoice", {"quickbooks_invoice_no": qb_payment.get('Line')[0].get('LineEx').get('any')[2].get('value').get('Value')}, "name")
-	# 	account.reference_name = si_name
-	# 	account.party = qb_payment.get('CustomerRef').get('name')
-	# 	account.party_type ="Customer"
-	# 	account.idx = 2

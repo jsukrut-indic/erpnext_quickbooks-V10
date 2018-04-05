@@ -193,12 +193,12 @@ def sync_qb():
 	    company_id=quickbooks_settings.realm_id,
 	    minorversion=3
 	)
-	# creates_qb_accounts_heads_to_erp_chart_of_accounts()
-	# sync_taxagency(quickbooks_objects)
-	# sync_tax_rate(quickbooks_objects)
-	# sync_tax_code(quickbooks_objects)
-	# sync_Account(quickbooks_objects)
-	#-----------------------------------------------------
+	creates_qb_accounts_heads_to_erp_chart_of_accounts()
+	sync_taxagency(quickbooks_objects)
+	sync_tax_rate(quickbooks_objects)
+	sync_tax_code(quickbooks_objects)
+	sync_Account(quickbooks_objects)
+	# #-----------------------------------------------------
 	sync_customers(quickbooks_objects)
 	sync_suppliers(quickbooks_objects)
 	sync_terms(quickbooks_objects)
@@ -208,7 +208,7 @@ def sync_qb():
 	sync_pi_orders(quickbooks_objects)
 	sync_payments(quickbooks_objects)
 	sync_bill_payments(quickbooks_objects)
-	# sync_expenses(quickbooks_objects)
+	sync_expenses(quickbooks_objects)
 
 	frappe.db.set_value("Quickbooks Settings", None, "sync_master", 1)
 	frappe.db.commit()

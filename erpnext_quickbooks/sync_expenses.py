@@ -54,7 +54,7 @@ def create_credit_entry(exp, expenses, quickbooks_settings):
 
 	if account_ref.get('account_currency') == company_currency:
 		exchange_rate = 1
-		credit_amount = expenses.get('TotalAmt') * expenses.get('ExchangeRate')
+		credit_amount = expenses.get('TotalAmt') * exchange_rate
 	else:
 		exchange_rate = expenses.get('ExchangeRate')
 		credit_amount = expenses.get('TotalAmt')
@@ -82,7 +82,7 @@ def create_debit_entry(exp, expenses, quickbooks_settings):
 				account_ref = get_account_detail(quickbooks_account_id)
 				if account_ref.get('account_currency') == company_currency:
 					exchange_rate = 1
-					debit_amount = row.get('Amount') * expenses.get('ExchangeRate')
+					debit_amount = row.get('Amount') * exchange_rate
 				else:
 					exchange_rate = expenses.get('ExchangeRate')
 					debit_amount = row.get('Amount')
@@ -99,7 +99,7 @@ def create_debit_entry(exp, expenses, quickbooks_settings):
 			
 			if account_ref.get('account_currency') == company_currency:
 				exchange_rate = 1
-				amount = row.get('Amount') * expenses.get('ExchangeRate')
+				amount = row.get('Amount') * exchange_rate
 			else:
 				exchange_rate = expenses.get('ExchangeRate')
 				amount = row.get('Amount') 
@@ -118,7 +118,7 @@ def party_advance_entry(exp, expenses, party_ref, quickbooks_settings, company_c
 	if party_ref.get('party_type') == "Customer":
 		if party_ref.get('default_currency') == company_currency:
 			exchange_rate = 1
-			customer_advance_amt = expenses.get('TotalAmt') * expenses.get('ExchangeRate')
+			customer_advance_amt = expenses.get('TotalAmt') * exchange_rate
 		else:
 			exchange_rate = expenses.get('ExchangeRate')
 			customer_advance_amt = expenses.get('TotalAmt')
@@ -132,7 +132,7 @@ def party_advance_entry(exp, expenses, party_ref, quickbooks_settings, company_c
 	elif party_ref.get('party_type') == "Supplier":
 		if party_ref.get('default_currency') == company_currency:
 			exchange_rate = 1
-			supp_advance_amt = expenses.get('TotalAmt') * expenses.get('ExchangeRate')
+			supp_advance_amt = expenses.get('TotalAmt') * exchange_rate
 		else:
 			exchange_rate = expenses.get('ExchangeRate')
 			supp_advance_amt = expenses.get('TotalAmt')

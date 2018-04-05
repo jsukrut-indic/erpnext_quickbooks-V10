@@ -16,7 +16,6 @@ def sync_payments(quickbooks_obj):
 	business_objects = "Payment"
 	get_qb_payments =  pagination(quickbooks_obj, business_objects)
 	if get_qb_payments:
-		# print " NO Of Payments" ,len(get_qb_payments)
 		sync_qb_si_payments(get_qb_payments, quickbooks_invoice_list)
 
 def sync_qb_si_payments(get_qb_payments, quickbooks_payment_list):
@@ -25,16 +24,12 @@ def sync_qb_si_payments(get_qb_payments, quickbooks_payment_list):
 	quickbooks_settings = frappe.get_doc("Quickbooks Settings", "Quickbooks Settings")
 	for qb_payment in get_qb_payments:
 		try:
-			# if qb_payment.get('PaymentRefNum') == 'check#5487':
-			# 	print "____________________________________________________________________________________-"			
-			# 	print "qb_payment",qb_payment
 			create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_list)
 		except Exception, e:
 			make_quickbooks_log(title=e.message, status="Error", method="sync_qb_si_payments", message=frappe.get_traceback(),
 						request_data=qb_payment, exception=True)
 			
 def create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_list):
-	# print "In Create_jv_from_qb_payment"
 	qb_payment_id = ''
 	if qb_payment.get('Id'):
 		qb_payment_id = "JE" + qb_payment.get('Id')
@@ -49,9 +44,6 @@ def create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_
 			journal.total_debit = qb_payment.get('TotalAmt')
 			journal.total_credit =  qb_payment.get('TotalAmt')
 			get_journal_entry_accounts(journal, qb_payment, quickbooks_settings)
-			# print "_____________________after_____get_journal_entry_accounts________"
-			# for row in journal.accounts:
-			# 	print "row",row.__dict__
 			# journal.flags.ignore_validate = True
 			# journal.flags.ignore_mandatory = True
 			journal.save()
@@ -66,16 +58,19 @@ def create_jv_from_qb_payment(qb_payment,quickbooks_settings,quickbooks_payment_
 				request_data=qb_payment, exception=True)
 	
 def get_journal_entry_accounts(journal, qb_payment, quickbooks_settings):
-	# print  "journal, qb_journal_entry, quickbooks_settings",journal, qb_journal_entry, quickbooks_settings
-	# print " Inprocess for get_journal_entry_accounts "
+
+	DepositToAccountID = qb_payment.get('DepositToAccountRef').get('value')
+	if DepositToAccountID:
+		cash_account = frappe.db.get_value("Account",{"quickbooks_account_id":DepositToAccountID},"name")
 	debit_entry = credit_entry = 1
 	company_name = frappe.defaults.get_defaults().get("company")
+
 	for bill in qb_payment.get('Line'):
-		# print "\n\n",bill
 		si_name = frappe.db.get_value("Sales Invoice", {"quickbooks_invoice_no": bill.get('LineEx').get('any')[2].get('value').get('Value')}, "name")
 		if si_name:
 			debit_to = frappe.db.get_value("Sales Invoice", {"name": si_name}, "debit_to")
-			cash_account = frappe.db.get_value("Company", {"name": company_name}, "default_bank_account")
+			if not cash_account:
+				cash_account = frappe.db.get_value("Company", {"name": company_name}, "default_bank_account")
 			if debit_entry:
 				default_receivable_account = frappe.db.get_value("Company", {"name": company_name}, "default_receivable_account")
 				account = journal.append("accounts", {})
