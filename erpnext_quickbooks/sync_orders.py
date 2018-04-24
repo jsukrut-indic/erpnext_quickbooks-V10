@@ -157,11 +157,13 @@ def create_sales_invoice(qb_orders, quickbooks_settings, quickbooks_invoice_list
 
 def set_debit_to(si, qb_orders, quickbooks_settings, default_currency):
 	"Set debit account"
+	company_name = frappe.defaults.get_defaults().get("company")
+	default_debtors_account= frappe.db.get_value("Company" ,{"name":company_name},"default_receivable_account")
 	party_currency = qb_orders.get("CurrencyRef").get('value') if qb_orders.get("CurrencyRef") else default_currency
 	if party_currency:
 		debtors_account = frappe.db.get_value("Account", {"account_currency": party_currency, "quickbooks_account_id": ["!=",""], 'account_type': 'Receivable',\
 			"company": quickbooks_settings.select_company, "root_type": "Asset", "is_group": "0"}, "name")
-		si.debit_to = "Accounts Receivable - qb - AALDC"
+		si.debit_to = default_debtors_account
 		# si.debit_to = debtors_account
 
 

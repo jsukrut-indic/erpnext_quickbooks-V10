@@ -43,8 +43,6 @@ def create_jv_from_qb_billpayment(qb_payment,quickbooks_settings,quickbooks_bill
 			journal.total_debit = qb_payment.get('TotalAmt')
 			journal.total_credit =  qb_payment.get('TotalAmt')
 			get_journal_entry_accounts(journal, qb_payment, quickbooks_settings)
-			# journal.flags.ignore_validate = True
-			# journal.flags.ignore_mandatory = True
 			journal.save()
 			journal.submit()
 			frappe.db.commit()
@@ -68,7 +66,6 @@ def get_journal_entry_accounts(journal, qb_payment, quickbooks_settings):
 			if not cash_account:
 				cash_account = frappe.db.get_value("Company", {"name": company_name}, "default_bank_account")
 			credit_to = frappe.db.get_value("Purchase Invoice", {"name": pi_name}, "credit_to")
-	 		# expense_account = frappe.db.get_value("Purchase Invoice Item", {"parent": pi_name}, "expense_account")
 			if debit_entry:
 				account = journal.append("accounts", {})
 				account.account = credit_to

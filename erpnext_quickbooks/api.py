@@ -127,7 +127,7 @@ def sync_from_quickbooks_to_erp(quickbooks_settings):
 	sync_pi_orders(quickbooks_obj)
 	sync_si_orders(quickbooks_obj)
 	sync_payments(quickbooks_obj)
-	# sync_bill_payments(quickbooks_objects)
+	sync_bill_payments(quickbooks_objects)
 
 def validate_quickbooks_settings(quickbooks_settings):
 	"""
@@ -198,7 +198,6 @@ def sync_qb():
 	sync_tax_rate(quickbooks_objects)
 	sync_tax_code(quickbooks_objects)
 	sync_Account(quickbooks_objects)
-	# #-----------------------------------------------------
 	sync_customers(quickbooks_objects)
 	sync_suppliers(quickbooks_objects)
 	sync_terms(quickbooks_objects)

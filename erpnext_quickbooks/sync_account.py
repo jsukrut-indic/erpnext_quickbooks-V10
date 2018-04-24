@@ -35,7 +35,7 @@ def create_account(qb_account, quickbooks_account_list, quickbooks_settings, Com
 	try:	
 		account = frappe.new_doc("Account")
 		account.quickbooks_account_id = str(qb_account.get('Id'))
-		account.account_name = str(qb_account.get('Name')) + " - " + "qb"
+		account.account_name = str(qb_account.get('Name')) + " - " + str(qb_account.get('Id')) + " - " + "qb"
 		account.is_group = False
 		account.parent_account = parent_account
 		set_account_type(account, qb_account)

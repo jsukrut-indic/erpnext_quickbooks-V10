@@ -8,13 +8,10 @@ import datetime
 
 def sync_entry(quickbooks_obj):
 	"""Fetch JournalEntry data from QuickBooks"""
-	# print "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-	# print "________c___quickbooks_obj for sync_si_payment_______________________________________________________________" 
 	Entry = """SELECT count(*) from JournalEntry""" 
 	qb_Entry = quickbooks_obj.query(TxnId)
 	if qb_Entry['QueryResponse']:
 		get_qb_Entry =  qb_Entry['QueryResponse']['JournalEntry']
-		# print get_qb_Entry , "-----------------"
 		sync_journal_entries(get_qb_Entry)
 
 def sync_journal_entries(get_qb_Entry):
