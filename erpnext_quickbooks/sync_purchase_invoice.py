@@ -273,7 +273,7 @@ def get_order_items(qb_orders, order_items, quickbooks_settings, stock_item):
 				"stock_uom": _("Nos"),
 				"uom":_("Nos"),
 				"amount":qb_item.get('Amount'),
-				"conversion_factor":0.0,
+				"conversion_factor":1,
 				"base_net_rate":qb_item.get('ItemBasedExpenseLineDetail').get('UnitPrice'),
 				"base_net_amount":qb_item.get('Amount'),
 				# "item_tax_rate": '{0}'.format(json.dumps(item_tax_rate)),
