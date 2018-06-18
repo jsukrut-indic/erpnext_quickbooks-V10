@@ -180,6 +180,51 @@ def sync_account_masters():
 	frappe.db.commit()
 	return True
 
+@frappe.whitelist()
+def sync_master():
+	quickbooks_settings = frappe.get_doc("Quickbooks Settings")
+	quickbooks_objects = QuickBooks(
+	    sandbox=False,
+	    consumer_key=quickbooks_settings.consumer_key,
+	    consumer_secret=quickbooks_settings.consumer_secret,
+	    access_token=quickbooks_settings.access_token,
+	    access_token_secret=quickbooks_settings.access_token_secret,
+	    company_id=quickbooks_settings.realm_id,
+	    minorversion=3
+	)
+	creates_qb_accounts_heads_to_erp_chart_of_accounts()
+	sync_taxagency(quickbooks_objects)
+	sync_tax_rate(quickbooks_objects)
+	sync_tax_code(quickbooks_objects)
+	sync_Account(quickbooks_objects)
+	sync_customers(quickbooks_objects)
+	sync_suppliers(quickbooks_objects)
+	sync_terms(quickbooks_objects)
+	create_Employee(quickbooks_objects)
+	sync_items(quickbooks_objects)
+	frappe.db.commit()
+	return True
+
+@frappe.whitelist()
+def sync_transaction():
+	quickbooks_settings = frappe.get_doc("Quickbooks Settings")
+	quickbooks_objects = QuickBooks(
+	    sandbox=False,
+	    consumer_key=quickbooks_settings.consumer_key,
+	    consumer_secret=quickbooks_settings.consumer_secret,
+	    access_token=quickbooks_settings.access_token,
+	    access_token_secret=quickbooks_settings.access_token_secret,
+	    company_id=quickbooks_settings.realm_id,
+	    minorversion=3
+	)
+	sync_si_orders(quickbooks_objects)
+	sync_pi_orders(quickbooks_objects)
+	sync_payments(quickbooks_objects)
+	sync_bill_payments(quickbooks_objects)
+	sync_expenses(quickbooks_objects)
+	frappe.db.commit()
+	return True
+
 
 @frappe.whitelist()
 def sync_qb():

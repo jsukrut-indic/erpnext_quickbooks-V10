@@ -185,8 +185,6 @@ def get_party_type(expenses):
 		if entity_ref.get('type') == "Customer":
 			return frappe.db.get_value("Customer", {"quickbooks_cust_id": entity_ref.get('value')}, ["name","default_currency"],as_dict=1).update({"party_type":"Customer"})
 		elif entity_ref.get('type') == "Vendor":
-			print "\n\n\n++++++++++++++++"
-			print "\n\n\entity_ref",entity_ref
 			return frappe.db.get_value("Supplier", {"quickbooks_supp_id": entity_ref.get('value')}, ["name","default_currency"],as_dict=1).update({"party_type":"Supplier"})
 	else:
 		return {}

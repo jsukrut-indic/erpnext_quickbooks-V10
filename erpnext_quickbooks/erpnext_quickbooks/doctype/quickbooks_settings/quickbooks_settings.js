@@ -21,6 +21,7 @@ frappe.ui.form.on('Quickbooks Settings', {
 			cur_frm.add_custom_button(__(cur_frm.doc.select_company + " " +'Company'), 
 			function() { frappe.set_route("Form", "Company", cur_frm.doc.select_company); })
 		}
+
 	 },
 	 onload: function(frm){
 		cur_frm.set_query("cash_bank_account",function(){
@@ -107,9 +108,26 @@ cur_frm.cscript.sync_data_to_qb = function (frm) {
 		cur_frm.toggle_reqd("selling_price_list", true);
 		cur_frm.toggle_reqd("buying_price_list", true);
 		cur_frm.toggle_reqd("warehouse", true);
+		cur_frm.set_df_property("sync_transaction","read_only",1)
+		cur_frm.refresh_field("sync_transaction");
+		return frappe.call({
+				method: "erpnext_quickbooks.api.sync_master",
+			});
+	}
+	
+},
+
+cur_frm.cscript.sync_transaction = function (frm) {
+	var me = this;
+	if(!cur_frm.doc.__islocal && cur_frm.doc.enable_quickbooks_online=== 1){
+		cur_frm.toggle_reqd("selling_price_list", true);
+		cur_frm.toggle_reqd("buying_price_list", true);
+		cur_frm.toggle_reqd("warehouse", true);
+		cur_frm.set_df_property("sync_data_to_qb","read_only",1)
+		cur_frm.refresh_field("sync_data_to_qb");
 
 		return frappe.call({
-				method: "erpnext_quickbooks.api.sync_quickbooks_resources",
+				method: "erpnext_quickbooks.api.sync_transaction",
 			});
 	}
 	
