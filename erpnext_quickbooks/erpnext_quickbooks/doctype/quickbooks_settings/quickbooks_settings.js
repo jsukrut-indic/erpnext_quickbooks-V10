@@ -21,9 +21,16 @@ frappe.ui.form.on('Quickbooks Settings', {
 			cur_frm.add_custom_button(__(cur_frm.doc.select_company + " " +'Company'), 
 			function() { frappe.set_route("Form", "Company", cur_frm.doc.select_company); })
 		}
+		
+		var table_data = frappe.render_template('progress_bar');
+		$(frm.fields_dict['progress_info'].wrapper).html(table_data)
+		refresh_field("progress_info")
 
 	 },
 	 onload: function(frm){
+
+	 	// cur_frm.set_df_property("sync_info","hidden",1)
+		
 		cur_frm.set_query("cash_bank_account",function(){
 			return{
 				"filters":{
@@ -56,6 +63,12 @@ frappe.ui.form.on('Quickbooks Settings', {
 				}
 			};
 		});
+	},
+	master_synced:function(frm){
+		if (frm.doc.master_synced == 1){
+			cur_frm.set_df_property("sync_transaction","read_only",0)
+			cur_frm.refresh_field("sync_transaction");
+		}
 	}
 	
 });
@@ -103,33 +116,98 @@ cur_frm.cscript.connect_to_qb = function () {
 }, 
  
 cur_frm.cscript.sync_data_to_qb = function (frm) {
-	var me = this;
+
 	if(!cur_frm.doc.__islocal && cur_frm.doc.enable_quickbooks_online=== 1){
+		// cur_frm.set_df_property("sync_info","hidden",0)
+		cur_frm.refresh_field("sync_info");
 		cur_frm.toggle_reqd("selling_price_list", true);
 		cur_frm.toggle_reqd("buying_price_list", true);
 		cur_frm.toggle_reqd("warehouse", true);
-		cur_frm.set_df_property("sync_transaction","read_only",1)
-		cur_frm.refresh_field("sync_transaction");
-		return frappe.call({
-				method: "erpnext_quickbooks.api.sync_master",
-			});
+		
+		$('#pd').text(" Syncing ..")
+		frappe.call({
+			method: "erpnext_quickbooks.api.sync_master",
+			freeze: true,
+	 		freeze_message:"Please wait..Dont reload while Syncing Masters From QuickBooks Online ................",
+			callback: function(r) {
+				$("#pd").removeClass("striped");
+				$("#pd").removeClass("active");
+				$('#pd').text("Master Syncing Done..!!")
+				cur_frm.set_value("master_synced", 1);
+				cur_frm.refresh_field("master_synced");
+				cur_frm.set_df_property("sync_transaction","read_only",1)
+				cur_frm.refresh_field("sync_transaction");
+			}
+		});
+
 	}
+	
+	var me = this;
+	for (i= 0,k=0;i<=10;i++){   
+		var width = i;
+		width = width * 10
+		$('#pd')[0].style.width = width +"%"
+	}
+
+	// if(!cur_frm.doc.__islocal && cur_frm.doc.enable_quickbooks_online=== 1){
+	// 	cur_frm.toggle_reqd("selling_price_list", true);
+	// 	cur_frm.toggle_reqd("buying_price_list", true);
+	// 	cur_frm.toggle_reqd("warehouse", true);
+	// 	cur_frm.set_df_property("sync_transaction","read_only",1)
+	// 	cur_frm.refresh_field("sync_transaction");
+	// 	return frappe.call({
+	// 			method: "erpnext_quickbooks.api.sync_master",
+	// 		});
+	// }
 	
 },
 
 cur_frm.cscript.sync_transaction = function (frm) {
 	var me = this;
-	if(!cur_frm.doc.__islocal && cur_frm.doc.enable_quickbooks_online=== 1){
-		cur_frm.toggle_reqd("selling_price_list", true);
-		cur_frm.toggle_reqd("buying_price_list", true);
-		cur_frm.toggle_reqd("warehouse", true);
-		cur_frm.set_df_property("sync_data_to_qb","read_only",1)
-		cur_frm.refresh_field("sync_data_to_qb");
-
-		return frappe.call({
-				method: "erpnext_quickbooks.api.sync_transaction",
-			});
+	if(cur_frm.doc.master_synced == 0){
+		frappe.msgprint("Please First Sync Master")
 	}
+	else{
+		if(!cur_frm.doc.__islocal && cur_frm.doc.enable_quickbooks_online=== 1){
+			cur_frm.set_df_property("sync_info","hidden",0)
+			cur_frm.refresh_field("sync_info");
+			cur_frm.toggle_reqd("selling_price_list", true);
+			cur_frm.toggle_reqd("buying_price_list", true);
+			cur_frm.toggle_reqd("warehouse", true);
+			cur_frm.set_df_property("sync_data_to_qb","read_only",1)
+			cur_frm.refresh_field("sync_data_to_qb");
+
+			// return frappe.call({
+			// 		method: "erpnext_quickbooks.api.sync_transaction",
+			// 	});
+
+			$('#pd').text(" Syncing ..")
+			
+			frappe.call({
+				method: "erpnext_quickbooks.api.sync_transaction",
+				freeze: true,
+		 		freeze_message:"Please wait.. Dont reload while Syncing Transactions From QuickBooks Online ................",
+				callback: function(r) {
+					$('#pd').text("Transaction Syncing Done..!!")
+					cur_frm.set_value("master_synced", 0);
+					cur_frm.refresh_field("master_synced");
+					cur_frm.set_df_property("sync_data_to_qb","read_only",0)
+					cur_frm.refresh_field("sync_data_to_qb");
+
+				}
+			});
+			
+			cur_frm.set_value("master_synced", 0);
+			cur_frm.refresh_field("master_synced");
+			var me = this;
+			for (i= 0,k=0;i<=10;i++){   
+				var width = i;
+				width = width * 10
+				$('#pd')[0].style.width = width +"%"
+			}
+		}
+	}
+	
 	
 },
 

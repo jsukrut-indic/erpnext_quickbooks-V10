@@ -1,0 +1,5 @@
+{
+	"js/erpnext_quickbooks.min.js":[
+		"public/js/templates/progress_bar.html"
+	]
+}

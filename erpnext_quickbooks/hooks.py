@@ -15,8 +15,8 @@ app_license = "GNU GPL v3.0"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/erpnext_quickbooks/css/erpnext_quickbooks.css"
-# app_include_js = "/assets/erpnext_quickbooks/js/erpnext_quickbooks.js"
+app_include_css = "/assets/erpnext_quickbooks/css/erpnext_quickbooks.css"
+app_include_js = "/assets/js/erpnext_quickbooks.min.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erpnext_quickbooks/css/erpnext_quickbooks.css"
