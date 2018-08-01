@@ -195,7 +195,6 @@ cur_frm.cscript.sync_transaction = function (frm) {
 					// cur_frm.refresh_field("sync_data_to_qb");
 					cur_frm.set_value("last_sync_datetime",frappe.datetime.now_datetime())
 					cur_frm.refresh_field("last_sync_datetime");
-					cur_frm.save()
 				}
 			});
 			
