@@ -178,7 +178,7 @@ def sync_account_masters():
 	sync_tax_code(quickbooks_objects)
 	sync_Account(quickbooks_objects)
 	frappe.db.set_value("Quickbooks Settings", None, "sync_master", 1)
-	frappe.db.set_value("Quickbooks Settings",None,"last_sync_datetime",)
+	frappe.db.set_value("Quickbooks Settings",None,"last_sync_datetime",frappe.utils.now())
 	frappe.db.commit()
 	return True
 
