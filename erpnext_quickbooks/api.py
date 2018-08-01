@@ -8,6 +8,7 @@ from frappe import _
 from .exceptions import QuickbooksError
 from .utils import disable_quickbooks_sync_on_exception, make_quickbooks_log
 from pyqb.quickbooks import QuickBooks
+from frappe.utils import now
 
 from .sync_customers import *
 from .sync_suppliers import *
@@ -177,6 +178,7 @@ def sync_account_masters():
 	sync_tax_code(quickbooks_objects)
 	sync_Account(quickbooks_objects)
 	frappe.db.set_value("Quickbooks Settings", None, "sync_master", 1)
+	frappe.db.set_value("Quickbooks Settings",None,"last_sync_datetime",)
 	frappe.db.commit()
 	return True
 
@@ -202,6 +204,7 @@ def sync_master():
 	sync_terms(quickbooks_objects)
 	create_Employee(quickbooks_objects)
 	sync_items(quickbooks_objects)
+	frappe.db.set_value("Quickbooks Settings", None, "last_sync_datetime", frappe.utils.now())
 	frappe.db.commit()
 	return True
 
@@ -222,6 +225,7 @@ def sync_transaction():
 	sync_payments(quickbooks_objects)
 	sync_bill_payments(quickbooks_objects)
 	sync_expenses(quickbooks_objects)
+	frappe.db.set_value("Quickbooks Settings", None, "last_sync_datetime", frappe.utils.now())
 	frappe.db.commit()
 	return True
 
@@ -253,8 +257,8 @@ def sync_qb():
 	sync_payments(quickbooks_objects)
 	sync_bill_payments(quickbooks_objects)
 	sync_expenses(quickbooks_objects)
-
 	frappe.db.set_value("Quickbooks Settings", None, "sync_master", 1)
+	frappe.db.set_value("Quickbooks Settings", None, "last_sync_datetime", frappe.utils.now())
 	frappe.db.commit()
 	return True
 
