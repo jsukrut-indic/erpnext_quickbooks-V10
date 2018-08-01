@@ -135,8 +135,8 @@ cur_frm.cscript.sync_data_to_qb = function (frm) {
 				$('#pd').text("Master Syncing Done..!!")
 				cur_frm.set_value("master_synced", 1);
 				cur_frm.refresh_field("master_synced");
-				cur_frm.set_df_property("sync_transaction","read_only",1)
-				cur_frm.refresh_field("sync_transaction");
+				cur_frm.set_value("last_sync_datetime",frappe.datetime.now_datetime())
+				cur_frm.refresh_field("last_sync_datetime");
 			}
 		});
 
@@ -174,8 +174,8 @@ cur_frm.cscript.sync_transaction = function (frm) {
 			cur_frm.toggle_reqd("selling_price_list", true);
 			cur_frm.toggle_reqd("buying_price_list", true);
 			cur_frm.toggle_reqd("warehouse", true);
-			cur_frm.set_df_property("sync_data_to_qb","read_only",1)
-			cur_frm.refresh_field("sync_data_to_qb");
+			// cur_frm.set_df_property("sync_data_to_qb","read_only",1)
+			// cur_frm.refresh_field("sync_data_to_qb");
 
 			// return frappe.call({
 			// 		method: "erpnext_quickbooks.api.sync_transaction",
@@ -191,8 +191,10 @@ cur_frm.cscript.sync_transaction = function (frm) {
 					$('#pd').text("Transaction Syncing Done..!!")
 					cur_frm.set_value("master_synced", 0);
 					cur_frm.refresh_field("master_synced");
-					cur_frm.set_df_property("sync_data_to_qb","read_only",0)
-					cur_frm.refresh_field("sync_data_to_qb");
+					//cur_frm.set_df_property("sync_data_to_qb","read_only",0)
+					// cur_frm.refresh_field("sync_data_to_qb");
+					cur_frm.set_value("last_sync_datetime",frappe.datetime.now_datetime())
+					cur_frm.refresh_field("last_sync_datetime");
 
 				}
 			});
